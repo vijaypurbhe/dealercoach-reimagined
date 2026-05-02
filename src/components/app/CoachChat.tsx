@@ -89,56 +89,31 @@ export function CoachChat({ dealerId, dealerName }: { dealerId: string; dealerNa
     setInput("");
     setBusy(true);
     let acc = "";
+    let placeholderAdded = false;
     try {
-      const resp = await fetch("/api/coach-chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dealerId, messages: next }),
-      });
-      if (!resp.ok || !resp.body) {
-        const err = await resp.json().catch(() => ({ error: "Chat failed" }));
-        setMessages((m) => [...m, { role: "assistant", content: `_${err.error ?? "Chat failed"}_` }]);
-        return;
-      }
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let buf = "";
-      let done = false;
-      setMessages((m) => [...m, { role: "assistant", content: "" }]);
-      while (!done) {
-        const { value, done: d } = await reader.read();
-        if (d) break;
-        buf += decoder.decode(value, { stream: true });
-        let nl: number;
-        while ((nl = buf.indexOf("\n")) !== -1) {
-          let line = buf.slice(0, nl);
-          buf = buf.slice(nl + 1);
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (!line.startsWith("data: ")) continue;
-          const json = line.slice(6).trim();
-          if (json === "[DONE]") {
-            done = true;
-            break;
-          }
-          try {
-            const parsed = JSON.parse(json);
-            const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) {
-              acc += delta;
-              setMessages((m) => {
-                const copy = [...m];
-                copy[copy.length - 1] = { role: "assistant", content: acc };
-                return copy;
-              });
+      const { streamCoachChat } = await import("@/lib/api");
+      await streamCoachChat({
+        dealerId,
+        messages: next,
+        onDelta: (chunk) => {
+          acc += chunk;
+          setMessages((m) => {
+            if (!placeholderAdded) {
+              placeholderAdded = true;
+              return [...m, { role: "assistant", content: acc }];
             }
-          } catch {
-            buf = line + "\n" + buf;
-            break;
-          }
-        }
+            const copy = [...m];
+            copy[copy.length - 1] = { role: "assistant", content: acc };
+            return copy;
+          });
+        },
+      });
+      if (!placeholderAdded) {
+        setMessages((m) => [...m, { role: "assistant", content: "_No response from AI._" }]);
       }
-    } catch (e: any) {
-      setMessages((m) => [...m, { role: "assistant", content: `_Network error: ${e?.message ?? e}_` }]);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setMessages((m) => [...m, { role: "assistant", content: `_${msg}_` }]);
     } finally {
       setBusy(false);
     }
