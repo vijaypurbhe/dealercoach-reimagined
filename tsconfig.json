@@ -32,5 +32,10 @@
         "./src/*"
       ]
     }
-  }
+  },
+  "exclude": [
+    "functions",
+    "dist",
+    "node_modules"
+  ]
 }
