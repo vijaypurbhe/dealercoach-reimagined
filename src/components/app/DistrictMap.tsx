@@ -1,48 +1,40 @@
 import { Link } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 import { DEALERS } from "@/data/dealers";
 import { computeHealth, latest } from "@/data/health";
-import { cn } from "@/lib/utils";
 
-// Approximate lat/lng for the demo dealer cities
-const COORDS: Record<string, { lat: number; lng: number }> = {
-  "Long Beach": { lat: 33.77, lng: -118.19 },
-  Phoenix: { lat: 33.45, lng: -112.07 },
-  Denver: { lat: 39.74, lng: -104.99 },
-  "Kansas City": { lat: 39.1, lng: -94.58 },
-  Chicago: { lat: 41.88, lng: -87.63 },
-  Tampa: { lat: 27.95, lng: -82.46 },
-  Edison: { lat: 40.52, lng: -74.41 },
-  Charleston: { lat: 32.78, lng: -79.93 },
+const COORDS: Record<string, [number, number]> = {
+  "Long Beach": [-118.19, 33.77],
+  Phoenix: [-112.07, 33.45],
+  Denver: [-104.99, 39.74],
+  "Kansas City": [-94.58, 39.1],
+  Chicago: [-87.63, 41.88],
+  Tampa: [-82.46, 27.95],
+  Edison: [-74.41, 40.52],
+  Charleston: [-79.93, 32.78],
 };
 
-// Bounding box of continental US
-const BBOX = { minLng: -125, maxLng: -66, minLat: 24, maxLat: 50 };
+const GEO_URL = "/us-states.json";
 
-function project(lat: number, lng: number, w: number, h: number) {
-  const x = ((lng - BBOX.minLng) / (BBOX.maxLng - BBOX.minLng)) * w;
-  const y = ((BBOX.maxLat - lat) / (BBOX.maxLat - BBOX.minLat)) * h;
-  return { x, y };
-}
+const colorFor = (s: string) =>
+  s === "attention" ? "oklch(0.58 0.22 27)" : s === "watch" ? "oklch(0.78 0.16 78)" : "oklch(0.66 0.16 152)";
 
 export function DistrictMap() {
   const [hovered, setHovered] = useState<string | null>(null);
-  const W = 900;
-  const H = 460;
 
-  const points = useMemo(() => {
-    return DEALERS.map((d) => {
-      const c = COORDS[d.city];
-      if (!c) return null;
-      const p = project(c.lat, c.lng, W, H);
-      const h = computeHealth(d);
-      const last = latest(d);
-      return { dealer: d, x: p.x, y: p.y, health: h, csi: last.csi };
-    }).filter(Boolean) as Array<{ dealer: (typeof DEALERS)[number]; x: number; y: number; health: ReturnType<typeof computeHealth>; csi: number }>;
-  }, []);
-
-  const colorFor = (s: string) =>
-    s === "attention" ? "oklch(0.58 0.22 27)" : s === "watch" ? "oklch(0.78 0.16 78)" : "oklch(0.66 0.16 152)";
+  const points = DEALERS.map((d) => {
+    const c = COORDS[d.city];
+    if (!c) return null;
+    const h = computeHealth(d);
+    const last = latest(d);
+    return { dealer: d, coords: c, health: h, csi: last.csi };
+  }).filter(Boolean) as Array<{
+    dealer: (typeof DEALERS)[number];
+    coords: [number, number];
+    health: ReturnType<typeof computeHealth>;
+    csi: number;
+  }>;
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card p-4 shadow-[var(--shadow-card)]">
@@ -60,110 +52,117 @@ export function DistrictMap() {
         </div>
       </div>
 
-      <div className="relative w-full" style={{ aspectRatio: `${W} / ${H}` }}>
-        <svg viewBox={`0 0 ${W} ${H}`} className="absolute inset-0 h-full w-full">
-          <defs>
-            <radialGradient id="bgFade" cx="50%" cy="50%" r="60%">
-              <stop offset="0%" stopColor="oklch(0.97 0.012 256)" />
-              <stop offset="100%" stopColor="oklch(0.93 0.018 256)" />
-            </radialGradient>
-            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="oklch(0.88 0.012 256)" strokeWidth="0.5" />
-            </pattern>
-          </defs>
-          <rect width={W} height={H} fill="url(#bgFade)" />
-          <rect width={W} height={H} fill="url(#grid)" />
-
-          {/* Region bands */}
-          {[
-            { x1: 0, x2: W * 0.38, label: "WEST" },
-            { x1: W * 0.38, x2: W * 0.7, label: "CENTRAL" },
-            { x1: W * 0.7, x2: W, label: "EAST" },
-          ].map((band) => (
-            <g key={band.label}>
-              <line x1={band.x2} y1={0} x2={band.x2} y2={H} stroke="oklch(0.85 0.012 256)" strokeDasharray="4 6" />
-              <text
-                x={(band.x1 + band.x2) / 2}
-                y={24}
-                textAnchor="middle"
-                fontSize={10}
-                fontWeight={600}
-                letterSpacing={2}
-                fill="oklch(0.6 0.03 258)"
-              >
-                {band.label}
-              </text>
-            </g>
-          ))}
+      <div className="relative w-full">
+        <ComposableMap
+          projection="geoAlbersUsa"
+          projectionConfig={{ scale: 1000 }}
+          width={900}
+          height={500}
+          style={{ width: "100%", height: "auto" }}
+        >
+          <Geographies geography={GEO_URL}>
+            {({ geographies }) =>
+              geographies.map((geo) => (
+                <Geography
+                  key={geo.rsmKey}
+                  geography={geo}
+                  fill="oklch(0.96 0.012 256)"
+                  stroke="oklch(0.85 0.012 256)"
+                  strokeWidth={0.6}
+                  style={{
+                    default: { outline: "none" },
+                    hover: { outline: "none", fill: "oklch(0.94 0.012 256)" },
+                    pressed: { outline: "none" },
+                  }}
+                />
+              ))
+            }
+          </Geographies>
 
           {points.map((p) => {
-            const r = 10 + (p.csi - 85) * 0.6;
-            const radius = Math.max(7, Math.min(16, r));
             const isHover = hovered === p.dealer.id;
+            const r = Math.max(7, Math.min(14, 9 + (p.csi - 88) * 0.6));
             return (
-              <g key={p.dealer.id}>
-                <circle
-                  cx={p.x}
-                  cy={p.y}
-                  r={radius + 8}
-                  fill={colorFor(p.health.status)}
-                  opacity={isHover ? 0.25 : 0.12}
-                  className="transition-opacity"
-                />
-                <Link to={`/dealers/${p.dealer.id}`}>
-                  <circle
-                    cx={p.x}
-                    cy={p.y}
-                    r={radius}
-                    fill={colorFor(p.health.status)}
-                    stroke="white"
-                    strokeWidth={2}
-                    className="cursor-pointer transition-transform"
-                    style={{ transform: isHover ? `scale(1.1)` : undefined, transformOrigin: `${p.x}px ${p.y}px` }}
-                    onMouseEnter={() => setHovered(p.dealer.id)}
-                    onMouseLeave={() => setHovered(null)}
-                  />
-                </Link>
-                <text
-                  x={p.x}
-                  y={p.y + radius + 14}
-                  textAnchor="middle"
-                  fontSize={10}
-                  fontWeight={500}
-                  fill="oklch(0.3 0.03 258)"
-                  pointerEvents="none"
-                >
-                  {p.dealer.city}
-                </text>
-                {isHover && (
-                  <g pointerEvents="none">
-                    <rect
-                      x={p.x + 14}
-                      y={p.y - 38}
-                      width={210}
-                      height={56}
-                      rx={8}
-                      fill="white"
-                      stroke="oklch(0.88 0.012 256)"
-                    />
-                    <text x={p.x + 24} y={p.y - 20} fontSize={11} fontWeight={600} fill="oklch(0.2 0.03 258)">
-                      {p.dealer.name}
+              <ProjectedMarker key={p.dealer.id} coordinates={p.coords}>
+                {(x, y) => (
+                  <g>
+                    <circle cx={x} cy={y} r={r + 8} fill={colorFor(p.health.status)} opacity={isHover ? 0.3 : 0.15} />
+                    <Link to={`/dealers/${p.dealer.id}`}>
+                      <circle
+                        cx={x}
+                        cy={y}
+                        r={r}
+                        fill={colorFor(p.health.status)}
+                        stroke="white"
+                        strokeWidth={2}
+                        className="cursor-pointer"
+                        onMouseEnter={() => setHovered(p.dealer.id)}
+                        onMouseLeave={() => setHovered(null)}
+                      />
+                    </Link>
+                    <text
+                      x={x}
+                      y={y + r + 11}
+                      textAnchor="middle"
+                      fontSize={9}
+                      fontWeight={600}
+                      fill="oklch(0.3 0.03 258)"
+                      pointerEvents="none"
+                      style={{ paintOrder: "stroke", stroke: "white", strokeWidth: 3 }}
+                    >
+                      {p.dealer.city}
                     </text>
-                    <text x={p.x + 24} y={p.y - 6} fontSize={10} fill="oklch(0.5 0.03 258)">
-                      Health {p.health.score} · CSI {p.csi.toFixed(1)}% · {p.dealer.sizeBand}
-                    </text>
-                    <text x={p.x + 24} y={p.y + 8} fontSize={10} fill="oklch(0.5 0.03 258)">
-                      Click to open coaching view →
-                    </text>
+                    {isHover && (
+                      <g pointerEvents="none">
+                        <rect
+                          x={x + 12}
+                          y={y - 42}
+                          width={230}
+                          height={56}
+                          rx={6}
+                          fill="white"
+                          stroke="oklch(0.85 0.012 256)"
+                          filter="drop-shadow(0 4px 8px rgb(0 0 0 / 0.08))"
+                        />
+                        <text x={x + 22} y={y - 24} fontSize={11} fontWeight={600} fill="oklch(0.2 0.03 258)">
+                          {p.dealer.name}
+                        </text>
+                        <text x={x + 22} y={y - 10} fontSize={10} fill="oklch(0.5 0.03 258)">
+                          Health {p.health.score} · CSI {p.csi.toFixed(1)}% · {p.dealer.sizeBand}
+                        </text>
+                        <text x={x + 22} y={y + 4} fontSize={10} fill="oklch(0.45 0.18 258)">
+                          Click to open coaching view →
+                        </text>
+                      </g>
+                    )}
                   </g>
                 )}
-              </g>
+              </ProjectedMarker>
             );
           })}
-        </svg>
+        </ComposableMap>
       </div>
     </div>
   );
+}
+
+// react-simple-maps' <Marker> handles projection internally, but we need the projected
+// (x,y) to draw extra UI (tooltip, halo). Easiest is to use a Marker child render trick:
+// wrap Marker and read the transform that's applied. Simpler: use d3-geo directly.
+import { geoAlbersUsa } from "d3-geo";
+
+const projection = geoAlbersUsa().scale(1000).translate([900 / 2, 500 / 2]);
+
+function ProjectedMarker({
+  coordinates,
+  children,
+}: {
+  coordinates: [number, number];
+  children: (x: number, y: number) => React.ReactNode;
+}) {
+  const projected = projection(coordinates);
+  if (!projected) return null;
+  return <>{children(projected[0], projected[1])}</>;
 }
 
 function Legend({ color, label }: { color: string; label: string }) {
