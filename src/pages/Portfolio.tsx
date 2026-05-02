@@ -94,13 +94,15 @@ export default function PortfolioPage() {
     <div className="min-h-screen bg-background">
       <AppHeader />
       <main className="mx-auto max-w-7xl px-6 py-10">
-        <div className="mb-8 flex flex-col gap-2">
+        <div className="mb-6 flex flex-col gap-2">
           <span className="text-xs font-medium uppercase tracking-wider text-primary">Coaching dashboard</span>
           <h1 className="text-3xl font-semibold tracking-tight">Your dealer portfolio</h1>
           <p className="max-w-2xl text-sm text-muted-foreground">
             AI-ranked by where your coaching attention will move the needle most this month.
           </p>
         </div>
+
+        <DistrictBriefing />
 
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <SummaryCard label="Avg 1-yr retention" value={`${summary.ret1.toFixed(1)}%`} delta={summary.retDelta} unit="pt" hint={`Target ${KPI_META.retention1y.target}%`}
