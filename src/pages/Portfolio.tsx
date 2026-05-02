@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
-import { ArrowUpDown, ArrowUpRight, TrendingDown, TrendingUp, Minus, AlertTriangle, Sparkles, Search, MapPin } from "lucide-react";
+import { ArrowUpDown, ArrowUpRight, TrendingDown, TrendingUp, Minus, AlertTriangle, Sparkles, Search, MapPin, Map as MapIcon, List } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AppHeader } from "@/components/app/AppHeader";
 import { HealthBadge } from "@/components/app/HealthBadge";
 import { Sparkline } from "@/components/app/Sparkline";
+import { DistrictBriefing } from "@/components/app/DistrictBriefing";
+import { DistrictMap } from "@/components/app/DistrictMap";
 import { DEALERS } from "@/data/dealers";
 import { computeHealth, formatKpi, latest } from "@/data/health";
 import { getDealerInsight } from "@/data/insights";
