@@ -1,120 +1,80 @@
-## Goal
+# Make the Dealer Coach Demo Stand Out for an OEM District Manager
 
-Rebuild the existing **[Dealer Coach AI](/projects/63577d97-5768-479f-aed4-39bdc683f289)** project in this workspace as a plain **Vite + React + Tailwind SPA** that deploys cleanly to **Firebase Hosting**, with the AI logic moved to **Firebase Cloud Functions** (so the `LOVABLE_API_KEY` / model API key stays server-side).
+## What competitors / real OEM tools emphasize
 
-The product itself stays identical: an AI coaching tool for Mitsubishi Motors district managers — dealer list, dealer detail page with KPI trends, peer benchmarking, AI-generated insights (root causes + ranked next-best actions), and a coach chat.
+Quick scan of Loop Software, UON Dealer View, pOrbis, DealerBuilt Lightyear, and NCM Associates — the tools OEM field teams actually use. Common themes:
 
-## What gets ported (1:1 from source project)
+- **Visit / field-rep workflow**: schedule visits, prep packs, capture notes, assign actions, and track follow-through between visits. This is the #1 thing district managers spend their day on and your demo doesn't have it yet.
+- **Action plan lifecycle**: not just "Add to plan" — owners, due dates, status (open/in-progress/done), and measured impact after the fact ("did CSI actually move?").
+- **Peer benchmarking with rank**: "you're #4 of 8 in region on retention" + percentile bands, not just an average number.
+- **Network-level rollup for the DM**: a single "state of my district" view with weighted KPIs, MoM/YoY deltas, and which dealers moved.
+- **Forecast / pacing**: month-to-date pace vs. target with projected end-of-month, color-coded.
+- **Customer voice**: review themes, NPS verbatims, mystery shop scores — already partially there via `online.recentThemes`, can be expanded.
+- **Audit / standards compliance**: facility checklist, brand standards score.
+- **AI that's specific**: "if you do X, expected lift Y based on N similar dealers" — you have this; lean into it more visibly.
 
-UI / data:
-- All routes: dealer list (`/`), dealer detail (`/dealers/:dealerId`), data view (`/data`)
-- All components under `src/components/app/`: `AppHeader`, `CoachChat`, `CoachInsights`, `HealthBadge`, `InsightChip`, `KpiTrendCard`, `Sparkline`
-- All shadcn `ui/` components actually used
-- Mock data + types in `src/data/` (`dealers.ts`, `health.ts`, `insights.ts`, `types.ts`)
-- Tailwind theme / design tokens from `src/styles.css`
+## Proposed additions (ranked by demo impact)
 
-Server logic (today: TanStack `createServerFn` + one server route):
-- `getCoachInsights` — structured insights via tool-calling
-- `coach-chat` — streaming chat endpoint
-- `callAi` / `streamAi` / `dealerDataPacket` helpers
+### 1. District Briefing on the Portfolio page (high impact, visual)
+A hero strip above the dealer table showing the DM's morning briefing:
+- District health score + trend arrow
+- "3 dealers need attention this week" with avatars/initials
+- "Top mover" and "Biggest drop" cards
+- One-line AI narrative: *"CSI is the dominant risk across your district; 4 of 8 dealers below target."*
 
-## What changes for the Firebase stack
+### 2. Visit Planner (high impact, unique)
+New section/route `/visits`:
+- Auto-prioritized visit queue (lowest health + longest since last visit)
+- "Prep pack" button per dealer → pre-generated talking points from AI Coach
+- Mark visit complete → captures notes and assigned actions
 
-1. **Framework swap**: TanStack Start → **Vite + React 19 + React Router v6** SPA. No SSR.
-2. **Routing**: file-based TanStack routes → React Router with the same URL shape (`/`, `/dealers/:dealerId`, `/data`).
-3. **Server functions → Firebase Cloud Functions (2nd gen, HTTPS)**:
-   - `POST /api/coach-insights` → wraps `getCoachInsights` logic
-   - `POST /api/coach-chat` → streaming chat (SSE/ReadableStream)
-   - Both call the Lovable AI Gateway server-side using a `LOVABLE_API_KEY` stored as a Firebase Functions secret (Secret Manager). Frontend never sees the key.
-4. **Hosting wiring**: `firebase.json` rewrites `/api/**` to the Functions, and all other routes to `index.html` so the SPA handles client-side routing (fixes refresh-on-deep-link).
-5. **Build output**: `vite build` → `dist/`, which Firebase Hosting serves.
+### 3. Action Plan tracker with outcomes (high impact, fills obvious gap)
+Promote the existing "Add to plan" from a toggle into a real object:
+- Owner, due date, status, target KPI
+- After 30/60/90 days show measured KPI delta vs. when action was created
+- "Actions that worked across your district" leaderboard — reuses `peerHistoricalActions` from the packet
 
-## Project structure
+### 4. Peer rank + percentile chips (medium impact, easy)
+On the dealer page, replace flat peer-average text with: rank pill ("#6 of 8 in West"), percentile bar, and gap-to-leader. Already have peer data in `dealerPacket.ts`.
 
-```text
-/
-├── src/
-│   ├── main.tsx                 # Vite entry, mounts <App/>
-│   ├── App.tsx                  # React Router setup
-│   ├── pages/
-│   │   ├── DealerList.tsx       # was routes/index.tsx
-│   │   ├── DealerDetail.tsx     # was routes/dealers.$dealerId.tsx
-│   │   └── DataView.tsx         # was routes/data.tsx
-│   ├── components/app/...       # ported as-is
-│   ├── components/ui/...        # shadcn (already present here)
-│   ├── data/...                 # ported as-is
-│   ├── lib/api.ts               # fetch helpers calling /api/coach-insights, /api/coach-chat
-│   └── styles.css               # ported tokens
-├── functions/                   # Firebase Cloud Functions (Node 20, TypeScript)
-│   ├── src/
-│   │   ├── index.ts             # exports api(): Express app
-│   │   ├── ai.ts                # callAi / streamAi (LOVABLE_API_KEY from secret)
-│   │   ├── coachInsights.ts     # tool-calling handler
-│   │   ├── coachChat.ts         # streaming handler
-│   │   └── dealerData.ts        # dealerDataPacket + dealer data (duplicated for server use)
-│   ├── package.json
-│   └── tsconfig.json
-├── firebase.json                # hosting + functions rewrites
-├── .firebaserc                  # project alias placeholder
-├── vite.config.ts               # SPA, alias @/ → src
-├── tailwind/postcss config      # Tailwind v4 via @tailwindcss/postcss (matches source)
-└── package.json
-```
+### 5. Pacing & forecast on KPI cards (medium impact, easy)
+Each `KpiTrendCard` shows MTD pace, projected EOM, and a target line. Visual: dotted projection extending the sparkline.
 
-## Build steps
+### 6. Customer Voice panel (medium impact, demo-friendly)
+Expand `context.online` into a card with star rating, review-volume sparkline, theme chips colored by sentiment, and 2-3 mock verbatim quotes. Optional: AI summary "what customers complain about most."
 
-1. **Reset framework scaffolding**
-   - Remove TanStack Start specifics: `src/router.tsx`, `src/routeTree.gen.ts`, `src/routes/`, the TanStack Vite plugin from `vite.config.ts`, related deps.
-   - Add `react-router-dom`, set up `src/main.tsx` + `src/App.tsx` with `<BrowserRouter>` and routes.
-   - Update `index.html` to mount `#root`.
+### 7. Compare mode (medium impact)
+Select 2-3 dealers from the portfolio → side-by-side KPI comparison with AI commentary on what the leader does differently.
 
-2. **Port frontend**
-   - Copy `src/data/`, `src/components/app/`, used `src/components/ui/`, `src/styles.css`, and any used hooks/utils from the source project via cross-project copy.
-   - Convert each TanStack route (`index.tsx`, `dealers.$dealerId.tsx`, `data.tsx`) into a React Router page component. Replace `Route.useParams()` with `useParams()`, `<Link to=...>` from TanStack with the React Router equivalent, and any `createServerFn` call sites with `fetch('/api/...')` via `src/lib/api.ts`.
+### 8. Export / share (low effort, high perceived polish)
+"Email district briefing" and "Export dealer one-pager (PDF)" buttons — even if mocked, they signal this is a real workflow tool. Real PDF export is straightforward with the existing data.
 
-3. **Create Firebase Functions backend**
-   - Initialize `functions/` (Node 20, TypeScript, 2nd gen).
-   - Single Express app exported as `api`, mounted at `/api` via Hosting rewrites.
-   - `POST /coach-insights`: ports `getCoachInsights` — same Zod input, same OpenAI-style tool schema, same prompt, returns parsed JSON.
-   - `POST /coach-chat`: ports `streamAi` — proxies streaming response back to client (`text/event-stream`).
-   - `LOVABLE_API_KEY` stored via `firebase functions:secrets:set LOVABLE_API_KEY`.
+### 9. Anomaly alerts feed (low effort)
+Small "What changed this week" feed in the header: "Sunset Mitsubishi CSI dropped 3pts", "Lakeshore parts sales hit new 12-mo high". Computed from existing history.
 
-4. **Firebase config**
-   ```json
-   // firebase.json (essentials)
-   {
-     "hosting": {
-       "public": "dist",
-       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-       "rewrites": [
-         { "source": "/api/**", "function": { "functionId": "api" } },
-         { "source": "**", "destination": "/index.html" }
-       ]
-     },
-     "functions": [{ "source": "functions", "codebase": "default", "runtime": "nodejs20" }]
-   }
-   ```
+### 10. Map view of the district (visual flair)
+Toggle the portfolio between table and US map; dots colored by health. Uses existing city/state data.
 
-5. **Frontend API client**
-   - `src/lib/api.ts`: `getCoachInsights(dealerId)` and `streamCoachChat(messages)` hitting the same `/api/*` paths so it works identically in dev and prod.
-   - Vite dev: add a `server.proxy` for `/api` → `http://127.0.0.1:5001/<project>/us-central1/api` (Firebase emulator), or document `firebase emulators:start` workflow.
+## Recommended scope for next iteration
 
-6. **Deployment docs (README section)**
-   - `npm install` (root + `functions/`)
-   - `firebase login` → `firebase use --add <your-project>`
-   - `firebase functions:secrets:set LOVABLE_API_KEY`
-   - `npm run build && firebase deploy`
+If you want one focused build, I'd do **#1 District Briefing + #3 Action Plan tracker + #4 Peer rank**. Together they round out the DM persona (network view → drill-in → follow-through) and reuse data you already generate. #2 Visit Planner is the strongest "this is built for me" moment if you have appetite for a second route.
 
-## Things to confirm during build
+## Technical notes
 
-- Whether you want **auth** (Firebase Auth) gating the app, or it stays open for the POC. Default in this plan: **open**, matches source project.
-- Whether to also persist anything to **Firestore** (e.g. saved actions). Default: **no** — data stays mock, matches source.
-- Region for Functions. Default: `us-central1`.
+- All additions are pure frontend on top of the mock data in `src/data/dealers.ts` — no backend changes required.
+- Action plan tracker would add a small `useLocalStorage`-backed store for status/owner/due-date so it persists across reloads in the demo.
+- District Briefing AI narrative can either be deterministic from the data or a new `coach-district` edge function mirroring `coach-insights`.
+- PDF export: `@react-pdf/renderer` or just `window.print()` with a print stylesheet for a one-pager.
 
-## Out of scope
+## Question before I build
 
-- No SSR / no TanStack Start.
-- No Lovable Cloud / Supabase — Firebase only.
-- No design changes — pixel-faithful port of the existing UI.
-
-After you approve, I'll switch to build mode, copy the files from the source project, wire up the Vite SPA, and scaffold the `functions/` directory ready for `firebase deploy`.
+Which slice do you want? Pick any combination:
+- A: District Briefing hero on Portfolio
+- B: Action Plan tracker with status + measured impact
+- C: Visit Planner route
+- D: Peer rank + percentile chips
+- E: Pacing / forecast on KPI cards
+- F: Customer Voice panel
+- G: Compare mode
+- H: PDF export / share
+- I: Map view

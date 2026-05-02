@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
-import { ArrowUpDown, ArrowUpRight, TrendingDown, TrendingUp, Minus, AlertTriangle, Sparkles, Search, MapPin } from "lucide-react";
+import { ArrowUpDown, ArrowUpRight, TrendingDown, TrendingUp, Minus, AlertTriangle, Sparkles, Search, MapPin, Map as MapIcon, List } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AppHeader } from "@/components/app/AppHeader";
 import { HealthBadge } from "@/components/app/HealthBadge";
 import { Sparkline } from "@/components/app/Sparkline";
+import { DistrictBriefing } from "@/components/app/DistrictBriefing";
+import { DistrictMap } from "@/components/app/DistrictMap";
 import { DEALERS } from "@/data/dealers";
 import { computeHealth, formatKpi, latest } from "@/data/health";
 import { getDealerInsight } from "@/data/insights";
@@ -23,6 +25,7 @@ export default function PortfolioPage() {
   const [size, setSize] = useState<Size>("all");
   const [sortKey, setSortKey] = useState<SortKey>("score");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [view, setView] = useState<"table" | "map">("table");
 
   const enriched = useMemo(
     () => DEALERS.map((d) => ({ dealer: d, health: computeHealth(d), insight: getDealerInsight(d) })),
@@ -91,13 +94,15 @@ export default function PortfolioPage() {
     <div className="min-h-screen bg-background">
       <AppHeader />
       <main className="mx-auto max-w-7xl px-6 py-10">
-        <div className="mb-8 flex flex-col gap-2">
+        <div className="mb-6 flex flex-col gap-2">
           <span className="text-xs font-medium uppercase tracking-wider text-primary">Coaching dashboard</span>
           <h1 className="text-3xl font-semibold tracking-tight">Your dealer portfolio</h1>
           <p className="max-w-2xl text-sm text-muted-foreground">
             AI-ranked by where your coaching attention will move the needle most this month.
           </p>
         </div>
+
+        <DistrictBriefing />
 
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <SummaryCard label="Avg 1-yr retention" value={`${summary.ret1.toFixed(1)}%`} delta={summary.retDelta} unit="pt" hint={`Target ${KPI_META.retention1y.target}%`}
@@ -131,12 +136,32 @@ export default function PortfolioPage() {
             <FacetSelect label="Region" value={region} onChange={(v) => setRegion(v as Region)} options={["all", "West", "Central", "East"]} />
             <FacetSelect label="Size" value={size} onChange={(v) => setSize(v as Size)} options={["all", "Small", "Mid", "Large"]} />
           </div>
-          <div className="relative w-full lg:w-72">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search dealers" className="pl-9" />
+          <div className="flex items-center gap-2">
+            <div className="relative w-full lg:w-72">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search dealers" className="pl-9" />
+            </div>
+            <div className="inline-flex rounded-md border border-border bg-background p-0.5">
+              <button
+                onClick={() => setView("table")}
+                className={cn("inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors",
+                  view === "table" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent")}>
+                <List className="h-3.5 w-3.5" /> Table
+              </button>
+              <button
+                onClick={() => setView("map")}
+                className={cn("inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors",
+                  view === "map" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent")}>
+                <MapIcon className="h-3.5 w-3.5" /> Map
+              </button>
+            </div>
           </div>
         </div>
 
+        {view === "map" ? (
+          <DistrictMap />
+        ) : (
+        <>
         <div className="mb-3 text-xs text-muted-foreground">
           Showing <span className="font-medium text-foreground">{filtered.length}</span> of {enriched.length} dealers
         </div>
@@ -203,6 +228,8 @@ export default function PortfolioPage() {
             </tbody>
           </table>
         </div>
+        </>
+        )}
       </main>
     </div>
   );

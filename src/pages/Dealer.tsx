@@ -8,6 +8,7 @@ import { Sparkline } from "@/components/app/Sparkline";
 import { CoachInsightsPanel } from "@/components/app/CoachInsights";
 import { CoachChat } from "@/components/app/CoachChat";
 import { InsightChip } from "@/components/app/InsightChip";
+import { PeerRankChip } from "@/components/app/PeerRankChip";
 import { DEALERS, getDealer } from "@/data/dealers";
 import { computeHealth, formatKpi, gapToTarget, latest } from "@/data/health";
 import { getDealerInsight } from "@/data/insights";
@@ -79,7 +80,7 @@ export default function DealerPage() {
 
           <div className="grid grid-cols-2 gap-2 pb-3 md:grid-cols-4">
             {KPI_STRIP.map((k) => (
-              <KpiStripItem key={k} kpi={k} value={last[k]} prev={prev[k]} dealer={dealer} />
+              <KpiStripItem key={k} kpi={k} value={last[k]} prev={prev[k]} dealer={dealer} peers={peers} />
             ))}
           </div>
           <div className="pb-3"><InsightChip insight={insight} /></div>
@@ -247,7 +248,16 @@ function QuickContext({ dealer, health, peers }: { dealer: Dealer; health: Deale
 
       <div className="my-3 h-px bg-white/60" />
 
-      {/* Operations meta */}
+      {/* Peer rank */}
+      <div className="space-y-2">
+        <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Peer rank · {dealer.region} {dealer.sizeBand}
+        </div>
+        <PeerRankChip dealer={dealer} peers={peers} kpi="csi" />
+        <PeerRankChip dealer={dealer} peers={peers} kpi="retention1y" />
+      </div>
+
+      <div className="my-3 h-px bg-white/60" />
       <dl className="space-y-1.5 text-xs">
         <Row label="Last visit" value={`${dealer.lastVisit} · ${daysSinceVisit}d ago`} />
         <Row label="Peer set" value={`${peers.length} dealers · ${dealer.region}`} />
@@ -285,7 +295,7 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function KpiStripItem({ kpi, value, prev, dealer }: { kpi: KpiKey; value: number; prev: number; dealer: Dealer }) {
+function KpiStripItem({ kpi, value, prev, dealer, peers }: { kpi: KpiKey; value: number; prev: number; dealer: Dealer; peers: Dealer[] }) {
   const meta = KPI_META[kpi];
   const delta = value - prev;
   const goodUp = meta.goodDirection === "up";
@@ -296,7 +306,10 @@ function KpiStripItem({ kpi, value, prev, dealer }: { kpi: KpiKey; value: number
     <div className="glass-subtle rounded-lg px-3 py-2">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="truncate text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{meta.label}</div>
+          <div className="flex items-center gap-1.5">
+            <div className="truncate text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{meta.label}</div>
+            <PeerRankChip dealer={dealer} peers={peers} kpi={kpi} compact />
+          </div>
           <div className="mt-0.5 flex items-baseline gap-1.5">
             <span className="text-base font-semibold tabular-nums">{formatKpi(kpi, value)}</span>
             <span className={cn("text-[10px] tabular-nums", positive ? "text-success" : "text-danger")}>
