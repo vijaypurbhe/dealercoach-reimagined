@@ -104,19 +104,7 @@ export default function DealerPage() {
               </section>
               <section>
                 <SectionTitle>Quick context</SectionTitle>
-                <div className="rounded-xl border border-border bg-card p-4 shadow-[var(--shadow-card)] text-sm space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Star className="h-4 w-4 fill-warning text-warning" />
-                    <span className="font-medium">{dealer.context.online.googleRating.toFixed(1)}</span>
-                    <span className="text-xs text-muted-foreground">· {dealer.context.online.reviewCount} reviews</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{dealer.context.staffingNotes}</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {dealer.modelMix.map((m) => (
-                      <span key={m} className="rounded-full border border-border bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">{m}</span>
-                    ))}
-                  </div>
-                </div>
+                <QuickContext dealer={dealer} health={health} peers={peers} />
               </section>
             </div>
             <section>
