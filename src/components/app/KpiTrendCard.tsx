@@ -38,7 +38,7 @@ export function KpiTrendCard({
     meta.unit === "$" ? `$${(v / 1000).toFixed(0)}k` : `${v.toFixed(1)}%`;
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4 shadow-[var(--shadow-card)]">
+    <div className="glass-card p-4">
       <div className="flex items-start justify-between">
         <div>
           <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{meta.label}</div>
