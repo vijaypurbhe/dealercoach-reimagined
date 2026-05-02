@@ -228,6 +228,8 @@ export default function PortfolioPage() {
             </tbody>
           </table>
         </div>
+        </>
+        )}
       </main>
     </div>
   );
