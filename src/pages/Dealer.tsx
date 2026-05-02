@@ -11,7 +11,7 @@ import { InsightChip } from "@/components/app/InsightChip";
 import { DEALERS, getDealer } from "@/data/dealers";
 import { computeHealth, formatKpi, gapToTarget, latest } from "@/data/health";
 import { getDealerInsight } from "@/data/insights";
-import { KPI_META, type KpiKey, type Dealer, type ActionPlan } from "@/data/types";
+import { KPI_META, type KpiKey, type Dealer, type ActionPlan, type DealerHealth } from "@/data/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
