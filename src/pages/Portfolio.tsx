@@ -136,12 +136,32 @@ export default function PortfolioPage() {
             <FacetSelect label="Region" value={region} onChange={(v) => setRegion(v as Region)} options={["all", "West", "Central", "East"]} />
             <FacetSelect label="Size" value={size} onChange={(v) => setSize(v as Size)} options={["all", "Small", "Mid", "Large"]} />
           </div>
-          <div className="relative w-full lg:w-72">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search dealers" className="pl-9" />
+          <div className="flex items-center gap-2">
+            <div className="relative w-full lg:w-72">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search dealers" className="pl-9" />
+            </div>
+            <div className="inline-flex rounded-md border border-border bg-background p-0.5">
+              <button
+                onClick={() => setView("table")}
+                className={cn("inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors",
+                  view === "table" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent")}>
+                <List className="h-3.5 w-3.5" /> Table
+              </button>
+              <button
+                onClick={() => setView("map")}
+                className={cn("inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors",
+                  view === "map" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent")}>
+                <MapIcon className="h-3.5 w-3.5" /> Map
+              </button>
+            </div>
           </div>
         </div>
 
+        {view === "map" ? (
+          <DistrictMap />
+        ) : (
+        <>
         <div className="mb-3 text-xs text-muted-foreground">
           Showing <span className="font-medium text-foreground">{filtered.length}</span> of {enriched.length} dealers
         </div>
