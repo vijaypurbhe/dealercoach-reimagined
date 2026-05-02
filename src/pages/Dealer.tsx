@@ -44,7 +44,7 @@ export default function DealerPage() {
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
-      <div className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className="sticky top-0 z-30 border-b border-white/40 bg-white/50 backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-white/35">
         <div className="mx-auto max-w-7xl px-6 pt-3">
           <Link to="/" className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground">
             <ArrowLeft className="h-3.5 w-3.5" /> Portfolio
