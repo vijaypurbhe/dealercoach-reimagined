@@ -248,7 +248,16 @@ function QuickContext({ dealer, health, peers }: { dealer: Dealer; health: Deale
 
       <div className="my-3 h-px bg-white/60" />
 
-      {/* Operations meta */}
+      {/* Peer rank */}
+      <div className="space-y-2">
+        <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Peer rank · {dealer.region} {dealer.sizeBand}
+        </div>
+        <PeerRankChip dealer={dealer} peers={peers} kpi="csi" />
+        <PeerRankChip dealer={dealer} peers={peers} kpi="retention1y" />
+      </div>
+
+      <div className="my-3 h-px bg-white/60" />
       <dl className="space-y-1.5 text-xs">
         <Row label="Last visit" value={`${dealer.lastVisit} · ${daysSinceVisit}d ago`} />
         <Row label="Peer set" value={`${peers.length} dealers · ${dealer.region}`} />
