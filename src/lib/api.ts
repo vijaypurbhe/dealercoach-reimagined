@@ -1,6 +1,6 @@
-// Frontend API client for Firebase Functions backend.
-// All endpoints are served behind /api/* (rewritten to the Cloud Function in firebase.json,
-// proxied to the emulator in vite.config.ts during local dev).
+import { supabase } from "@/integrations/supabase/client";
+import { getDealer } from "@/data/dealers";
+import { buildDealerPacket } from "@/lib/dealerPacket";
 
 export interface CoachInsights {
   headline: string;
@@ -18,14 +18,74 @@ export interface CoachInsights {
 }
 
 export async function getCoachInsights(dealerId: string): Promise<CoachInsights> {
-  const res = await fetch("/api/coach-insights", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ dealerId }),
+  const dealer = getDealer(dealerId);
+  if (!dealer) throw new Error("Dealer not found");
+  const packet = buildDealerPacket(dealer);
+
+  const { data, error } = await supabase.functions.invoke("coach-insights", {
+    body: { packet },
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-    throw new Error(err.error ?? `HTTP ${res.status}`);
+  if (error) throw new Error(error.message ?? "Failed to load insights");
+  return data as CoachInsights;
+}
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+
+export async function streamCoachChat(opts: {
+  dealerId: string;
+  messages: Array<{ role: "user" | "assistant"; content: string }>;
+  onDelta: (chunk: string) => void;
+}): Promise<void> {
+  const dealer = getDealer(opts.dealerId);
+  if (!dealer) throw new Error("Dealer not found");
+  const packet = buildDealerPacket(dealer);
+
+  const resp = await fetch(`${SUPABASE_URL}/functions/v1/coach-chat`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+      apikey: SUPABASE_PUBLISHABLE_KEY,
+    },
+    body: JSON.stringify({ packet, messages: opts.messages }),
+  });
+
+  if (!resp.ok || !resp.body) {
+    let msg = `Chat failed (${resp.status})`;
+    try {
+      const j = await resp.json();
+      if (j?.error) msg = j.error;
+    } catch { /* ignore */ }
+    throw new Error(msg);
   }
-  return res.json();
+
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+  let streamDone = false;
+
+  while (!streamDone) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    let nl: number;
+    while ((nl = buf.indexOf("\n")) !== -1) {
+      let line = buf.slice(0, nl);
+      buf = buf.slice(nl + 1);
+      if (line.endsWith("\r")) line = line.slice(0, -1);
+      if (line.startsWith(":") || line.trim() === "") continue;
+      if (!line.startsWith("data: ")) continue;
+      const json = line.slice(6).trim();
+      if (json === "[DONE]") { streamDone = true; break; }
+      try {
+        const parsed = JSON.parse(json);
+        const delta = parsed.choices?.[0]?.delta?.content as string | undefined;
+        if (delta) opts.onDelta(delta);
+      } catch {
+        buf = line + "\n" + buf;
+        break;
+      }
+    }
+  }
 }
