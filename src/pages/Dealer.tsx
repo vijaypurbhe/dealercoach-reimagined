@@ -8,7 +8,7 @@ import { Sparkline } from "@/components/app/Sparkline";
 import { CoachInsightsPanel } from "@/components/app/CoachInsights";
 import { CoachChat } from "@/components/app/CoachChat";
 import { InsightChip } from "@/components/app/InsightChip";
-import { PeerRankChip, computePeerRank } from "@/components/app/PeerRankChip";
+import { PeerRankChip } from "@/components/app/PeerRankChip";
 import { DEALERS, getDealer } from "@/data/dealers";
 import { computeHealth, formatKpi, gapToTarget, latest } from "@/data/health";
 import { getDealerInsight } from "@/data/insights";
