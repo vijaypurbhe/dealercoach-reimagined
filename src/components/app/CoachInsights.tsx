@@ -77,7 +77,7 @@ export function CoachInsightsPanel({ dealerId }: { dealerId: string }) {
       <Section icon={<Lightbulb className="h-4 w-4" />} title="Likely root causes">
         <div className="space-y-3">
           {insights.root_causes.map((rc, i) => (
-            <div key={i} className="rounded-lg border border-border bg-card p-3">
+            <div key={i} className="glass-subtle rounded-lg p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="font-medium text-sm">{rc.cause}</div>
                 <ConfidencePill c={rc.confidence} />
@@ -95,7 +95,7 @@ export function CoachInsightsPanel({ dealerId }: { dealerId: string }) {
       <Section icon={<Target className="h-4 w-4" />} title="Recommended next-best actions">
         <div className="space-y-3">
           {insights.actions.map((a, i) => (
-            <div key={i} className="rounded-lg border border-border bg-card p-4">
+            <div key={i} className="glass-subtle rounded-lg p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="font-medium">{a.title}</div>
@@ -134,7 +134,7 @@ export function CoachInsightsPanel({ dealerId }: { dealerId: string }) {
 
 function Section({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+    <div className="glass-card p-5">
       <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
         <span className="text-primary">{icon}</span>
         {title}

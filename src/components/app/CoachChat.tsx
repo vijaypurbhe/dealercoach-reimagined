@@ -120,7 +120,7 @@ export function CoachChat({ dealerId, dealerName }: { dealerId: string; dealerNa
   }
 
   return (
-    <div className="flex h-[560px] flex-col rounded-xl border border-border bg-card shadow-[var(--shadow-card)]">
+    <div className="flex h-[560px] flex-col glass-card">
       <div className="flex items-center gap-2 border-b border-border px-4 py-3">
         <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
           <MessageSquare className="h-3.5 w-3.5" />
