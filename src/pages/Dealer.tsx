@@ -356,8 +356,8 @@ function FocusCards({ dealer }: { dealer: Dealer }) {
 
 function ActionsList({ actions }: { actions: ActionPlan[] }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card shadow-[var(--shadow-card)]">
-      <ul className="divide-y divide-border">
+    <div className="glass-card overflow-hidden">
+      <ul className="divide-y divide-white/50">
         {actions.map((a) => (
           <li key={a.id} className="flex items-start gap-4 px-4 py-3 text-sm">
             <div className="w-20 shrink-0 text-xs text-muted-foreground tabular-nums">{a.date}</div>
