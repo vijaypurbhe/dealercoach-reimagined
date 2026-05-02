@@ -96,21 +96,23 @@ export default function DealerPage() {
             <TabsTrigger value="context" className="data-[state=active]:bg-muted">Context</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="mt-0 space-y-6 tab-transition">
+          <TabsContent value="overview" className="mt-0 tab-transition">
             <div className="grid gap-6 lg:grid-cols-3">
-              <section className="lg:col-span-2">
-                <SectionTitle>Top focus areas</SectionTitle>
-                <FocusCards dealer={dealer} />
-              </section>
-              <section>
+              <div className="space-y-6 lg:col-span-2">
+                <section>
+                  <SectionTitle>Top focus areas</SectionTitle>
+                  <FocusCards dealer={dealer} />
+                </section>
+                <section>
+                  <SectionTitle>Recent action plans</SectionTitle>
+                  <ActionsList actions={dealer.actions.slice(0, 4)} />
+                </section>
+              </div>
+              <aside className="lg:sticky lg:top-[260px] lg:self-start">
                 <SectionTitle>Quick context</SectionTitle>
                 <QuickContext dealer={dealer} health={health} peers={peers} />
-              </section>
+              </aside>
             </div>
-            <section>
-              <SectionTitle>Recent action plans</SectionTitle>
-              <ActionsList actions={dealer.actions.slice(0, 4)} />
-            </section>
           </TabsContent>
 
           <TabsContent value="kpis" className="mt-0 tab-transition">
