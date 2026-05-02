@@ -80,7 +80,7 @@ export default function DealerPage() {
 
           <div className="grid grid-cols-2 gap-2 pb-3 md:grid-cols-4">
             {KPI_STRIP.map((k) => (
-              <KpiStripItem key={k} kpi={k} value={last[k]} prev={prev[k]} dealer={dealer} />
+              <KpiStripItem key={k} kpi={k} value={last[k]} prev={prev[k]} dealer={dealer} peers={peers} />
             ))}
           </div>
           <div className="pb-3"><InsightChip insight={insight} /></div>
