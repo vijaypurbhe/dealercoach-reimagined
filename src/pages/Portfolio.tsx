@@ -25,6 +25,7 @@ export default function PortfolioPage() {
   const [size, setSize] = useState<Size>("all");
   const [sortKey, setSortKey] = useState<SortKey>("score");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [view, setView] = useState<"table" | "map">("table");
 
   const enriched = useMemo(
     () => DEALERS.map((d) => ({ dealer: d, health: computeHealth(d), insight: getDealerInsight(d) })),
