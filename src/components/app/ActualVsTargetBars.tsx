@@ -30,7 +30,7 @@ export function ActualVsTargetBars({
           {subtitle && <p className="text-[11px] text-muted-foreground">{subtitle}</p>}
         </div>
       </div>
-      <div className="h-56">
+      <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.91 0.012 256)" vertical={false} />
