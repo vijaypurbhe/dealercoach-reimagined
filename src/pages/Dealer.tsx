@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
+import { KpiActionPlansPanel } from "@/components/app/KpiActionPlansPanel";
 import { ArrowLeft, MapPin, Calendar, Users, Building2, Star, Globe, MessageSquare, AlertTriangle, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { AppHeader } from "@/components/app/AppHeader";
 import { HealthBadge } from "@/components/app/HealthBadge";
@@ -33,6 +34,9 @@ export default function DealerPage() {
   const { dealerId } = useParams<{ dealerId: string }>();
   const dealer = dealerId ? getDealer(dealerId) : undefined;
   const [chatOpen, setChatOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") ?? "overview";
+  const setTab = (v: string) => setSearchParams((p) => { p.set("tab", v); return p; }, { replace: true });
 
   if (!dealer) {
     return (
@@ -98,14 +102,14 @@ export default function DealerPage() {
 
       <main className="mx-auto max-w-7xl px-6 py-6">
         <div className="flex gap-6">
-          <DealerSideNav dealerId={dealer.id} />
+          <DealerSideNav active={tab} onSelect={setTab} />
           <div className="min-w-0 flex-1">
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="mb-6 h-10 w-full justify-start overflow-x-auto bg-transparent p-0">
+        <Tabs value={tab} onValueChange={setTab} className="w-full">
+          <TabsList className="mb-6 h-10 w-full justify-start overflow-x-auto bg-transparent p-0 lg:hidden">
             <TabsTrigger value="overview" className="data-[state=active]:bg-muted">Overview</TabsTrigger>
             <TabsTrigger value="performance" className="data-[state=active]:bg-muted">Performance vs Target</TabsTrigger>
+            <TabsTrigger value="kpi-plans" className="data-[state=active]:bg-muted">KPI Action Plans</TabsTrigger>
             <TabsTrigger value="kpis" className="data-[state=active]:bg-muted">KPI trends</TabsTrigger>
-            <TabsTrigger value="coach" className="data-[state=active]:bg-muted">AI Coach</TabsTrigger>
             <TabsTrigger value="actions" className="data-[state=active]:bg-muted">Actions ({dealer.actions.length})</TabsTrigger>
             <TabsTrigger value="context" className="data-[state=active]:bg-muted">Context</TabsTrigger>
           </TabsList>
@@ -133,8 +137,14 @@ export default function DealerPage() {
             <PerformanceVsTarget dealer={dealer} />
           </TabsContent>
 
-          <TabsContent value="coach" className="mt-0 tab-transition">
-            <CoachInsightsPanel dealerId={dealer.id} />
+          <TabsContent value="kpi-plans" className="mt-0 tab-transition">
+            <KpiActionPlansPanel dealer={dealer} />
+          </TabsContent>
+
+          <TabsContent value="kpis" className="mt-0 tab-transition">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {KPI_GRID.map((k) => (<KpiTrendCard key={k} dealer={dealer} peers={peers} kpi={k} />))}
+            </div>
           </TabsContent>
 
           <TabsContent value="actions" className="mt-0 tab-transition">
@@ -439,7 +449,7 @@ function PerformanceVsTarget({ dealer }: { dealer: Dealer }) {
         Showing <span className="font-semibold">real Mitsubishi CRS data</span> for dealer {code}. Green bars =
         achieved monthly target, red bars = below target.
       </div>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2">
         <ActualVsTargetBars title="Part Sales" subtitle="Actual vs target ($)" data={parts} unit="$" />
         <ActualVsTargetBars title="Accessory Sales" subtitle="Actual vs target ($)" data={accy} unit="$" />
         <ActualVsTargetBars title="CPRO Count" subtitle="New vehicle retention monthly" data={cpro} unit="#" />
