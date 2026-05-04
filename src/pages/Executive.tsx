@@ -292,15 +292,15 @@ export default function ExecutivePage() {
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={revenue}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                  <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `$${Math.round(v / 1000)}k`} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
+                  <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" tickFormatter={(v) => `$${Math.round(v / 1000)}k`} />
                   <Tooltip formatter={(v: number) => `$${Math.round(v).toLocaleString()}`} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="parts" name="Parts actual" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="partsPlan" name="Parts plan" fill="hsl(var(--muted))" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="accessories" name="Accy actual" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="accyPlan" name="Accy plan" fill="hsl(var(--muted-foreground) / 0.3)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="parts" name="Parts actual" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="partsPlan" name="Parts plan" fill="var(--muted)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="accessories" name="Accy actual" fill="var(--accent)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="accyPlan" name="Accy plan" fill="var(--muted-foreground)" fillOpacity={0.3} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
