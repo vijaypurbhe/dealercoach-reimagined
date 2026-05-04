@@ -145,7 +145,13 @@ export default function ExecutivePage() {
             </div>
             <span className="text-[11px] text-muted-foreground">{insights.length} insights this week</span>
           </div>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className={cn(
+            "grid gap-3",
+            insights.length === 1 && "grid-cols-1",
+            insights.length === 2 && "md:grid-cols-2",
+            insights.length === 3 && "md:grid-cols-2 lg:grid-cols-3",
+            insights.length >= 4 && "md:grid-cols-2 xl:grid-cols-4",
+          )}>
             {insights.map((ins, i) => (
               <InsightCard key={i} {...ins} />
             ))}
