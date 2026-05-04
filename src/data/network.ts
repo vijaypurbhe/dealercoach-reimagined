@@ -167,6 +167,88 @@ export function revenueVsPlan() {
   });
 }
 
+export function networkSeries(kpi: KpiKey, months = 12): number[] {
+  const sample = DEALERS[0];
+  if (!sample) return [];
+  const len = sample.history.length;
+  const start = Math.max(0, len - months);
+  const meta = KPI_META[kpi];
+  const out: number[] = [];
+  for (let i = start; i < len; i++) {
+    const vals = DEALERS.map((d) => d.history[i]?.[kpi]).filter((v): v is number => typeof v === "number");
+    if (!vals.length) { out.push(0); continue; }
+    out.push(meta.unit === "$" ? vals.reduce((a, b) => a + b, 0) : vals.reduce((a, b) => a + b, 0) / vals.length);
+  }
+  return out;
+}
+
+export interface ExecInsight {
+  tone: "opportunity" | "risk" | "win";
+  title: string;
+  detail: string;
+  impact: string;
+  confidence: number;
+}
+
+export function executiveInsights(): ExecInsight[] {
+  const kpis = networkKpis();
+  const regions = regionRollup();
+  const insights: ExecInsight[] = [];
+
+  const parts = kpis.find((k) => k.kpi === "partsSales")!;
+  const partsAttainment = (parts.value / parts.target) * 100;
+  if (partsAttainment < 100) {
+    const gap = parts.target - parts.value;
+    insights.push({
+      tone: "opportunity",
+      title: `Parts revenue tracking ${partsAttainment.toFixed(0)}% of plan`,
+      detail: `Network is $${Math.round(gap / 1000)}k below monthly plan. Top quartile dealers convert 6–8% more attach at delivery — replicating their menu pricing across the bottom 20% recovers ~$${Math.round(gap * 0.6 / 1000)}k.`,
+      impact: `+$${Math.round(gap * 0.6 / 1000)}k / mo`,
+      confidence: 0.78,
+    });
+  }
+
+  const csi = kpis.find((k) => k.kpi === "csi")!;
+  const csiMom = csi.value - csi.prev;
+  if (Math.abs(csiMom) >= 0.3) {
+    insights.push({
+      tone: csiMom >= 0 ? "win" : "risk",
+      title: csiMom >= 0
+        ? `CSI up ${csiMom.toFixed(1)}pt MoM — momentum holding`
+        : `CSI slipped ${Math.abs(csiMom).toFixed(1)}pt MoM`,
+      detail: csiMom >= 0
+        ? `${csi.pctOnTrack}% of dealers at or above target. Reinforce service-drive playbook in the bottom ${100 - csi.pctOnTrack}% before quarter close.`
+        : `${100 - csi.pctOnTrack}% of dealers now below target. Service wait time and advisor turnover are the dominant themes in recent surveys.`,
+      impact: `${csi.pctOnTrack}% on plan`,
+      confidence: 0.82,
+    });
+  }
+
+  const worstRegion = [...regions].sort((a, b) => a.avgHealth - b.avgHealth)[0];
+  if (worstRegion && worstRegion.attentionCount >= 1) {
+    insights.push({
+      tone: "risk",
+      title: `${worstRegion.region} region concentrates risk`,
+      detail: `Avg health ${worstRegion.avgHealth} with ${worstRegion.attentionCount} dealer${worstRegion.attentionCount > 1 ? "s" : ""} flagged for attention. Recommend an exec touchpoint with the regional DM before next cycle.`,
+      impact: `${worstRegion.attentionCount} dealers`,
+      confidence: 0.74,
+    });
+  }
+
+  const warranty = kpis.find((k) => k.kpi === "warrantyLeakage")!;
+  if (warranty.value > KPI_META.warrantyLeakage.target) {
+    insights.push({
+      tone: "opportunity",
+      title: `Warranty leakage at ${warranty.value.toFixed(1)}% — above ${KPI_META.warrantyLeakage.target}% threshold`,
+      detail: `Network avg leakage exceeds target by ${(warranty.value - KPI_META.warrantyLeakage.target).toFixed(1)}pt. Tightening claim documentation in the worst quartile typically recovers 1.5–2pt within 60 days.`,
+      impact: `~1.8pt recoverable`,
+      confidence: 0.7,
+    });
+  }
+
+  return insights.slice(0, 4);
+}
+
 export function programAdoption() {
   // Use action categories as a proxy for program participation
   const programs = ["Retention", "CSI", "Parts", "Accessories", "Warranty"] as const;
