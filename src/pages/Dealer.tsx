@@ -417,3 +417,34 @@ function OutcomePill({ outcome, liftPct }: { outcome: string; liftPct?: number }
   const label = outcome === "worked" ? `Worked${liftPct ? ` +${liftPct}pt` : ""}` : outcome === "no_change" ? "No change" : outcome === "negative" ? "Negative" : "In progress";
   return <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${map[outcome]}`}>{label}</span>;
 }
+
+function PerformanceVsTarget({ dealer }: { dealer: Dealer }) {
+  const code = getRealCode(dealer);
+  if (!code) {
+    return (
+      <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center text-sm text-muted-foreground">
+        Actual-vs-target charts are available for dealers with source data feeds.
+        Open <span className="font-medium text-foreground">Birmingham Mitsubishi</span> or{" "}
+        <span className="font-medium text-foreground">Long Lewis Mitsubishi</span> to see the customer's real KPI series.
+      </div>
+    );
+  }
+  const parts = getRealPartsSeries(code);
+  const accy = getRealAccySeries(code);
+  const cpro = getRealCproSeries(code);
+  const avgPC = getRealAvgPartsPerCpro(code);
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
+        Showing <span className="font-semibold">real Mitsubishi CRS data</span> for dealer {code}. Green bars =
+        achieved monthly target, red bars = below target.
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <ActualVsTargetBars title="Part Sales" subtitle="Actual vs target ($)" data={parts} unit="$" />
+        <ActualVsTargetBars title="Accessory Sales" subtitle="Actual vs target ($)" data={accy} unit="$" />
+        <ActualVsTargetBars title="CPRO Count" subtitle="New vehicle retention monthly" data={cpro} unit="#" />
+        <ActualVsTargetBars title="Avg Parts $ / CPRO" subtitle="Per-customer parts revenue" data={avgPC} unit="$" />
+      </div>
+    </div>
+  );
+}
