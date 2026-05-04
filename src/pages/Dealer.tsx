@@ -185,6 +185,29 @@ export default function DealerPage() {
               </ContextCard>
             </div>
           </TabsContent>
+
+          <TabsContent value="ai-coach" className="mt-0 tab-transition">
+            <div className="grid gap-6 lg:grid-cols-2">
+              <CoachInsightsPanel dealerId={dealer.id} />
+              <CoachChat dealerId={dealer.id} dealerName={dealer.name} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="programs" className="mt-0 tab-transition">
+            <ProgramsPanel dealer={dealer} />
+          </TabsContent>
+          <TabsContent value="csi" className="mt-0 tab-transition">
+            <CsiAuditPanel dealer={dealer} />
+          </TabsContent>
+          <TabsContent value="franchise" className="mt-0 tab-transition">
+            <FranchisePanel dealer={dealer} />
+          </TabsContent>
+          <TabsContent value="attachments" className="mt-0 tab-transition">
+            <AttachmentsPanel dealer={dealer} />
+          </TabsContent>
+          <TabsContent value="signoff" className="mt-0 tab-transition">
+            <SignOffPanel dealer={dealer} />
+          </TabsContent>
         </Tabs>
           </div>
         </div>
