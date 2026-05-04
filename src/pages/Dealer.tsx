@@ -169,6 +169,8 @@ export default function DealerPage() {
             </div>
           </TabsContent>
         </Tabs>
+          </div>
+        </div>
       </main>
     </div>
   );
