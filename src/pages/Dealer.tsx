@@ -129,10 +129,8 @@ export default function DealerPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="kpis" className="mt-0 tab-transition">
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {KPI_GRID.map((k) => (<KpiTrendCard key={k} dealer={dealer} peers={peers} kpi={k} />))}
-            </div>
+          <TabsContent value="performance" className="mt-0 tab-transition">
+            <PerformanceVsTarget dealer={dealer} />
           </TabsContent>
 
           <TabsContent value="coach" className="mt-0 tab-transition">
