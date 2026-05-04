@@ -35,9 +35,16 @@ export default function DealerPage() {
   const { dealerId } = useParams<{ dealerId: string }>();
   const dealer = dealerId ? getDealer(dealerId) : undefined;
   const [chatOpen, setChatOpen] = useState(false);
+  const VALID_TABS = ["overview", "ai-coach", "performance", "kpi-plans", "kpis", "actions", "context", "programs", "csi", "franchise", "attachments", "signoff"];
   const [searchParams, setSearchParams] = useSearchParams();
-  const tab = searchParams.get("tab") ?? "overview";
-  const setTab = (v: string) => setSearchParams((p) => { p.set("tab", v); return p; }, { replace: true });
+  const rawTab = searchParams.get("tab");
+  const tab = rawTab && VALID_TABS.includes(rawTab) ? rawTab : "overview";
+  const setTab = (v: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (v === "overview") next.delete("tab");
+    else next.set("tab", v);
+    setSearchParams(next, { replace: true });
+  };
 
   if (!dealer) {
     return (
