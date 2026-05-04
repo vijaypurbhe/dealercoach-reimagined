@@ -12,6 +12,7 @@ import { InsightChip } from "@/components/app/InsightChip";
 import { PeerRankChip } from "@/components/app/PeerRankChip";
 import { DealerSideNav } from "@/components/app/DealerSideNav";
 import { ActualVsTargetBars } from "@/components/app/ActualVsTargetBars";
+import { ProgramsPanel, CsiAuditPanel, FranchisePanel, AttachmentsPanel, SignOffPanel } from "@/components/app/DealerExtraPanels";
 import {
   getRealCode,
   getRealPartsSeries,
