@@ -1,49 +1,61 @@
-## What the data contains
+# C-Level Executive Persona — Dashboard Plan
 
-- **Dealers_Parts_Sales_Performance.csv** – 2 real dealers (`02042`, `02048` = Birmingham Mitsubishi), monthly `parts_cst` (actual), `parts_obj` (target), `percent_obj`, `uio_utm` (UIO count). History 2013→Apr 2025.
-- **Dealers_Accessory_Sales_Performance.csv** – same 2 dealers, monthly `accy_cst`, `accy_obj`, `percent_obj`, `nvr` (new vehicle retail count).
-- **KPI_Corrective_Action_Plan.csv** – 28 action-plan entries with `kpi_type`, `root_cause`, `corrective_action`, `expected_result`, `isKpiMet`. KPI types: CSI, Part Sales, Accessory Sales, CPRO Count, PART CPRO, 1 Year Retention, Other.
-- **Screenshots** show the legacy CRS UI: side-nav (Dashboard / Parts Performance / KPI Action Plans / Programs / CSI Audit / Franchise / Attachments / Sign-Off), 2×3 grid of **Actual vs Target bar charts** with red bars when missed and green bars when exceeded, and a 3-column form (Root Cause | Corrective Action | Expected Results) above a grid of past entries.
+## Research: What auto OEM execs (VP Sales / VP Aftersales / COO / Network GM) want
 
-## What I'll build
+Based on how dealer-network platforms (CDK Intelligence Suite, Autologica Scope, NEXERA Executive Insight, Loop for Audi) frame exec views, OEM C-suite leaders care less about any one dealer and more about **network health, variance, and risk concentration**. Common themes:
 
-### 1. Real-data ingestion (no DB; static JSON for demo speed)
-- Add `src/data/real/parts.json`, `accessories.json`, `kpiPlans.json` generated from the CSVs (deduped, last 12 months).
-- Add `src/data/realDealers.ts` exposing two real dealers (`02042` and `02048 – Birmingham Mitsubishi`) built from real series, slotted into the existing `Dealer` type alongside the synthetic 8 so the rest of the app keeps working.
-- Derive `partsSales`, `accessorySales`, `csi` (from KPI plan flag history), and compute `partsPercentObj`, `accyPercentObj` per month for the new chart.
+1. **Network performance vs. plan** — actual vs. target on the 4–6 KPIs that roll up to corporate scorecards (CSI, retention, parts/accessory revenue, warranty leakage), with YoY and MoM trend.
+2. **Geographic / regional heatmap** — which regions and districts are hot/cold; click through to district → dealer.
+3. **District Manager leaderboard** — ranking DMs by portfolio health, % dealers on-track, coaching cadence (visits completed), action-plan close rate.
+4. **Risk & exception list** — top N at-risk dealers driving the largest gap-to-target dollars; "movers" (biggest improvers/decliners MoM).
+5. **Program / promotion adoption** — % of dealers participating in active OEM programs.
+6. **Forecast vs. budget** — projected parts/accessory revenue vs. annual plan, with shortfall callouts.
+7. **AI executive briefing** — one-paragraph "what changed this week across the network" summary, similar to today's District Briefing.
 
-### 2. New "Actual vs Target" bar chart component
-- `src/components/app/ActualVsTargetBars.tsx` using Recharts `BarChart`. Two series per month (Actual / Target); Actual bar colored **green when ≥ target, red when < target**, target bar gray. Mirrors the legacy CRS look.
-- Drop into Dealer page in a new "Performance vs Target" section showing 6 charts: Part Sales, Accessory Sales, Avg Parts $/CPRO (parts_cst / nvr), CPRO Count (nvr), CSI, FRFT (synthesized for non-real KPIs so all 6 tiles render).
+## Proposed direction
 
-### 3. KPI Improvement Action Plans page (new)
-- `src/pages/KpiActionPlans.tsx` route `/dealers/:dealerId/kpi-plans`.
-- Top: dropdown "KPI Needing Attention" + 3 textareas (Root Cause / Corrective Action / Expected Results & Timeline) — matches screenshot.
-- Bottom: data grid of plans with KPI Type, Contact Date, Contact Month, Root Cause, Corrective Action, status (Met = ✓ green / Not Met = red).
-- Seed grid from `kpiPlans.json` for real dealers; new entries are stored in component state (demo only).
-- Add link from Dealer page action bar.
+Add a **persona switcher** (DM ↔ Executive) in the header. Executive lands on a new `/executive` route with this layout:
 
-### 4. Legacy-style left side-nav on Dealer page (subtle)
-- Add a slim secondary nav inside the Dealer page: Dashboard · Parts Performance · KPI Action Plans · Programs · CSI Audit · Franchise/Facility · Attachments · Sign-Off. Only Dashboard, Parts Performance, and KPI Action Plans are wired up; the rest are visible-but-disabled "coming soon" so the demo mirrors the customer's mental model without scope creep.
+```text
+┌─────────────────────────────────────────────────────────────┐
+│ Header + Persona switch (DM | Executive)                    │
+├─────────────────────────────────────────────────────────────┤
+│ Network KPI strip:  CSI │ Retention │ Parts $ │ Warranty   │
+│   value · vs target · MoM · YoY · % dealers on-track        │
+├──────────────────────────────────┬──────────────────────────┤
+│ Region heatmap (US map, colored  │ AI Executive Briefing    │
+│ by avg health; click → drill)    │ (network-level summary)  │
+├──────────────────────────────────┴──────────────────────────┤
+│ District Manager leaderboard                                │
+│   DM · # dealers · avg score · % on-track · visits · trend  │
+├─────────────────────────────────────────────────────────────┤
+│ Top risk dealers      │ Top movers (▲/▼ MoM)                │
+├─────────────────────────────────────────────────────────────┤
+│ Program adoption  │  Parts/Accessory revenue vs plan chart  │
+└─────────────────────────────────────────────────────────────┘
+```
 
-### 5. Portfolio surface
-- Mark the 2 real dealers with a "Real data" pill in the portfolio table and District Map so the SE can demo the difference instantly.
+Drilldown: click a region → filtered DM list; click a DM → their portfolio (today's `/` view scoped to their dealers); click a dealer → existing dealer page. Persona is purely a view layer — same underlying data.
 
-## Files to add
-- `src/data/real/parts.json`, `accessories.json`, `kpiPlans.json`
-- `src/data/realDealers.ts`
-- `src/components/app/ActualVsTargetBars.tsx`
-- `src/components/app/DealerSideNav.tsx`
-- `src/pages/KpiActionPlans.tsx`
+## Technical approach
 
-## Files to edit
-- `src/data/dealers.ts` – merge real dealers into `DEALERS`
-- `src/data/types.ts` – add optional `partsActualVsTarget`, `accyActualVsTarget` series and `kpiPlans` to `Dealer`
-- `src/pages/Dealer.tsx` – mount side-nav + Actual-vs-Target section + link to KPI plans page
-- `src/App.tsx` – register `/dealers/:dealerId/kpi-plans` route
-- `src/pages/Portfolio.tsx` – "Real data" pill on real dealers
+- **Persona state**: lightweight context (`PersonaProvider`) persisted to `localStorage`; switcher in `AppHeader`.
+- **Routes**:
+  - `/executive` — new exec dashboard (default landing when persona = exec)
+  - `/executive/districts/:dmId` — DM-scoped portfolio (reuses Portfolio with a filter)
+  - existing `/` and `/dealers/:id` unchanged for DM persona
+- **Data**:
+  - Add `districtManagers.ts` seed (5–7 DMs, each owns N dealers; assign `dmId` to each dealer in `dealers.ts`).
+  - Add `network.ts` aggregation helpers: `networkKpiRollup()`, `dmLeaderboard()`, `topRisk()`, `topMovers()`, `programAdoption()`.
+- **New components** (under `src/components/exec/`):
+  - `NetworkKpiStrip`, `RegionHeatmap` (reuse `DistrictMap` colored by aggregate health), `DmLeaderboard`, `RiskList`, `MoversList`, `ProgramAdoptionCard`, `RevenueVsPlanChart` (Recharts).
+- **AI briefing**: reuse the existing `coach-insights` edge function pattern with a new `network-briefing` function that summarizes aggregated KPIs (no per-dealer chat).
 
-## Out of scope (flag for follow-up)
-- Persisting new KPI action plans to Lovable Cloud
-- Programs / CSI Audit / Franchise / Attachments / Sign-Off screens
-- Backfilling the other 8 synthetic dealers with real CSV data (only 2 dealers exist in source)
+## What I need you to confirm
+
+1. **Persona scope** — just two personas (DM + Executive), or also a middle "Regional Director" tier?
+2. **KPI focus** — keep the existing 6 KPIs at the network level, or do you want exec-only KPIs added (e.g., warranty $ exposure, F&I penetration, fixed absorption %)?
+3. **Drilldown model** — should the exec be able to *act* (assign action plans, sign-off) or strictly read/observe with drill-through to the DM view?
+4. **AI briefing** — network-wide weekly summary only, or also a chat ("which districts are dragging parts revenue this quarter?")?
+
+Once you confirm, I'll implement the persona switcher, data rollups, exec route, and the components above.
