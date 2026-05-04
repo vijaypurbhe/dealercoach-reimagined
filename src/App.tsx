@@ -3,6 +3,7 @@ import PortfolioPage from "./pages/Portfolio";
 import DealerPage from "./pages/Dealer";
 import KpiActionPlansPage from "./pages/KpiActionPlans";
 import DataPage from "./pages/Data";
+import ExecutivePage from "./pages/Executive";
 
 function NotFound() {
   return (
