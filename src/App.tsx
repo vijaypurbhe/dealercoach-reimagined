@@ -1,6 +1,7 @@
 import { Routes, Route, Link, useLocation } from "react-router-dom";
 import PortfolioPage from "./pages/Portfolio";
 import DealerPage from "./pages/Dealer";
+import KpiActionPlansPage from "./pages/KpiActionPlans";
 import DataPage from "./pages/Data";
 
 function NotFound() {
@@ -29,6 +30,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<PortfolioPage />} />
         <Route path="/dealers/:dealerId" element={<DealerPage />} />
+        <Route path="/dealers/:dealerId/kpi-plans" element={<KpiActionPlansPage />} />
         <Route path="/data" element={<DataPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

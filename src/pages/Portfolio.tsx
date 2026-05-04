@@ -186,9 +186,16 @@ export default function PortfolioPage() {
                 return (
                   <tr key={dealer.id} className="group row-stagger transition-colors hover:bg-muted/30" style={{ animationDelay: `${Math.min(i, 10) * 35}ms` }}>
                     <td className="px-4 py-3">
-                      <Link to={`/dealers/${dealer.id}`} className="font-medium hover:text-primary">
-                        {dealer.name}
-                      </Link>
+                      <div className="flex items-center gap-1.5">
+                        <Link to={`/dealers/${dealer.id}`} className="font-medium hover:text-primary">
+                          {dealer.name}
+                        </Link>
+                        {dealer.id.startsWith("real-") && (
+                          <span className="rounded-full bg-success/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-success ring-1 ring-success/30">
+                            Real data
+                          </span>
+                        )}
+                      </div>
                       <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
                         <MapPin className="h-3 w-3" /> {dealer.city}, {dealer.state} · {dealer.region} · {dealer.sizeBand}
                       </div>

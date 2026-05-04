@@ -1,80 +1,49 @@
-# Make the Dealer Coach Demo Stand Out for an OEM District Manager
+## What the data contains
 
-## What competitors / real OEM tools emphasize
+- **Dealers_Parts_Sales_Performance.csv** – 2 real dealers (`02042`, `02048` = Birmingham Mitsubishi), monthly `parts_cst` (actual), `parts_obj` (target), `percent_obj`, `uio_utm` (UIO count). History 2013→Apr 2025.
+- **Dealers_Accessory_Sales_Performance.csv** – same 2 dealers, monthly `accy_cst`, `accy_obj`, `percent_obj`, `nvr` (new vehicle retail count).
+- **KPI_Corrective_Action_Plan.csv** – 28 action-plan entries with `kpi_type`, `root_cause`, `corrective_action`, `expected_result`, `isKpiMet`. KPI types: CSI, Part Sales, Accessory Sales, CPRO Count, PART CPRO, 1 Year Retention, Other.
+- **Screenshots** show the legacy CRS UI: side-nav (Dashboard / Parts Performance / KPI Action Plans / Programs / CSI Audit / Franchise / Attachments / Sign-Off), 2×3 grid of **Actual vs Target bar charts** with red bars when missed and green bars when exceeded, and a 3-column form (Root Cause | Corrective Action | Expected Results) above a grid of past entries.
 
-Quick scan of Loop Software, UON Dealer View, pOrbis, DealerBuilt Lightyear, and NCM Associates — the tools OEM field teams actually use. Common themes:
+## What I'll build
 
-- **Visit / field-rep workflow**: schedule visits, prep packs, capture notes, assign actions, and track follow-through between visits. This is the #1 thing district managers spend their day on and your demo doesn't have it yet.
-- **Action plan lifecycle**: not just "Add to plan" — owners, due dates, status (open/in-progress/done), and measured impact after the fact ("did CSI actually move?").
-- **Peer benchmarking with rank**: "you're #4 of 8 in region on retention" + percentile bands, not just an average number.
-- **Network-level rollup for the DM**: a single "state of my district" view with weighted KPIs, MoM/YoY deltas, and which dealers moved.
-- **Forecast / pacing**: month-to-date pace vs. target with projected end-of-month, color-coded.
-- **Customer voice**: review themes, NPS verbatims, mystery shop scores — already partially there via `online.recentThemes`, can be expanded.
-- **Audit / standards compliance**: facility checklist, brand standards score.
-- **AI that's specific**: "if you do X, expected lift Y based on N similar dealers" — you have this; lean into it more visibly.
+### 1. Real-data ingestion (no DB; static JSON for demo speed)
+- Add `src/data/real/parts.json`, `accessories.json`, `kpiPlans.json` generated from the CSVs (deduped, last 12 months).
+- Add `src/data/realDealers.ts` exposing two real dealers (`02042` and `02048 – Birmingham Mitsubishi`) built from real series, slotted into the existing `Dealer` type alongside the synthetic 8 so the rest of the app keeps working.
+- Derive `partsSales`, `accessorySales`, `csi` (from KPI plan flag history), and compute `partsPercentObj`, `accyPercentObj` per month for the new chart.
 
-## Proposed additions (ranked by demo impact)
+### 2. New "Actual vs Target" bar chart component
+- `src/components/app/ActualVsTargetBars.tsx` using Recharts `BarChart`. Two series per month (Actual / Target); Actual bar colored **green when ≥ target, red when < target**, target bar gray. Mirrors the legacy CRS look.
+- Drop into Dealer page in a new "Performance vs Target" section showing 6 charts: Part Sales, Accessory Sales, Avg Parts $/CPRO (parts_cst / nvr), CPRO Count (nvr), CSI, FRFT (synthesized for non-real KPIs so all 6 tiles render).
 
-### 1. District Briefing on the Portfolio page (high impact, visual)
-A hero strip above the dealer table showing the DM's morning briefing:
-- District health score + trend arrow
-- "3 dealers need attention this week" with avatars/initials
-- "Top mover" and "Biggest drop" cards
-- One-line AI narrative: *"CSI is the dominant risk across your district; 4 of 8 dealers below target."*
+### 3. KPI Improvement Action Plans page (new)
+- `src/pages/KpiActionPlans.tsx` route `/dealers/:dealerId/kpi-plans`.
+- Top: dropdown "KPI Needing Attention" + 3 textareas (Root Cause / Corrective Action / Expected Results & Timeline) — matches screenshot.
+- Bottom: data grid of plans with KPI Type, Contact Date, Contact Month, Root Cause, Corrective Action, status (Met = ✓ green / Not Met = red).
+- Seed grid from `kpiPlans.json` for real dealers; new entries are stored in component state (demo only).
+- Add link from Dealer page action bar.
 
-### 2. Visit Planner (high impact, unique)
-New section/route `/visits`:
-- Auto-prioritized visit queue (lowest health + longest since last visit)
-- "Prep pack" button per dealer → pre-generated talking points from AI Coach
-- Mark visit complete → captures notes and assigned actions
+### 4. Legacy-style left side-nav on Dealer page (subtle)
+- Add a slim secondary nav inside the Dealer page: Dashboard · Parts Performance · KPI Action Plans · Programs · CSI Audit · Franchise/Facility · Attachments · Sign-Off. Only Dashboard, Parts Performance, and KPI Action Plans are wired up; the rest are visible-but-disabled "coming soon" so the demo mirrors the customer's mental model without scope creep.
 
-### 3. Action Plan tracker with outcomes (high impact, fills obvious gap)
-Promote the existing "Add to plan" from a toggle into a real object:
-- Owner, due date, status, target KPI
-- After 30/60/90 days show measured KPI delta vs. when action was created
-- "Actions that worked across your district" leaderboard — reuses `peerHistoricalActions` from the packet
+### 5. Portfolio surface
+- Mark the 2 real dealers with a "Real data" pill in the portfolio table and District Map so the SE can demo the difference instantly.
 
-### 4. Peer rank + percentile chips (medium impact, easy)
-On the dealer page, replace flat peer-average text with: rank pill ("#6 of 8 in West"), percentile bar, and gap-to-leader. Already have peer data in `dealerPacket.ts`.
+## Files to add
+- `src/data/real/parts.json`, `accessories.json`, `kpiPlans.json`
+- `src/data/realDealers.ts`
+- `src/components/app/ActualVsTargetBars.tsx`
+- `src/components/app/DealerSideNav.tsx`
+- `src/pages/KpiActionPlans.tsx`
 
-### 5. Pacing & forecast on KPI cards (medium impact, easy)
-Each `KpiTrendCard` shows MTD pace, projected EOM, and a target line. Visual: dotted projection extending the sparkline.
+## Files to edit
+- `src/data/dealers.ts` – merge real dealers into `DEALERS`
+- `src/data/types.ts` – add optional `partsActualVsTarget`, `accyActualVsTarget` series and `kpiPlans` to `Dealer`
+- `src/pages/Dealer.tsx` – mount side-nav + Actual-vs-Target section + link to KPI plans page
+- `src/App.tsx` – register `/dealers/:dealerId/kpi-plans` route
+- `src/pages/Portfolio.tsx` – "Real data" pill on real dealers
 
-### 6. Customer Voice panel (medium impact, demo-friendly)
-Expand `context.online` into a card with star rating, review-volume sparkline, theme chips colored by sentiment, and 2-3 mock verbatim quotes. Optional: AI summary "what customers complain about most."
-
-### 7. Compare mode (medium impact)
-Select 2-3 dealers from the portfolio → side-by-side KPI comparison with AI commentary on what the leader does differently.
-
-### 8. Export / share (low effort, high perceived polish)
-"Email district briefing" and "Export dealer one-pager (PDF)" buttons — even if mocked, they signal this is a real workflow tool. Real PDF export is straightforward with the existing data.
-
-### 9. Anomaly alerts feed (low effort)
-Small "What changed this week" feed in the header: "Sunset Mitsubishi CSI dropped 3pts", "Lakeshore parts sales hit new 12-mo high". Computed from existing history.
-
-### 10. Map view of the district (visual flair)
-Toggle the portfolio between table and US map; dots colored by health. Uses existing city/state data.
-
-## Recommended scope for next iteration
-
-If you want one focused build, I'd do **#1 District Briefing + #3 Action Plan tracker + #4 Peer rank**. Together they round out the DM persona (network view → drill-in → follow-through) and reuse data you already generate. #2 Visit Planner is the strongest "this is built for me" moment if you have appetite for a second route.
-
-## Technical notes
-
-- All additions are pure frontend on top of the mock data in `src/data/dealers.ts` — no backend changes required.
-- Action plan tracker would add a small `useLocalStorage`-backed store for status/owner/due-date so it persists across reloads in the demo.
-- District Briefing AI narrative can either be deterministic from the data or a new `coach-district` edge function mirroring `coach-insights`.
-- PDF export: `@react-pdf/renderer` or just `window.print()` with a print stylesheet for a one-pager.
-
-## Question before I build
-
-Which slice do you want? Pick any combination:
-- A: District Briefing hero on Portfolio
-- B: Action Plan tracker with status + measured impact
-- C: Visit Planner route
-- D: Peer rank + percentile chips
-- E: Pacing / forecast on KPI cards
-- F: Customer Voice panel
-- G: Compare mode
-- H: PDF export / share
-- I: Map view
+## Out of scope (flag for follow-up)
+- Persisting new KPI action plans to Lovable Cloud
+- Programs / CSI Audit / Franchise / Attachments / Sign-Off screens
+- Backfilling the other 8 synthetic dealers with real CSV data (only 2 dealers exist in source)

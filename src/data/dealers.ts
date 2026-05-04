@@ -1,5 +1,6 @@
 import type { Dealer, KpiPoint, KpiKey, ActionPlan } from "./types";
 import { KPI_META } from "./types";
+import { REAL_DEALERS } from "./realDealers";
 
 function months(count: number): string[] {
   const out: string[] = [];
@@ -137,7 +138,7 @@ const facilityByArchetype: Record<Profile["archetype"], string[]> = {
   parts_drag: ["Parts counter not visible from service lane", "Accessory display dated", "Limited online accessory presence"],
 };
 
-export const DEALERS: Dealer[] = profiles.map((p) => ({
+const SYNTHETIC_DEALERS: Dealer[] = profiles.map((p) => ({
   id: p.id,
   name: p.name,
   city: p.city,
@@ -177,6 +178,8 @@ export const DEALERS: Dealer[] = profiles.map((p) => ({
   },
   peerIds: [],
 }));
+
+export const DEALERS: Dealer[] = [...REAL_DEALERS, ...SYNTHETIC_DEALERS];
 
 // Build peer groups: same region + size band (excluding self)
 for (const d of DEALERS) {
