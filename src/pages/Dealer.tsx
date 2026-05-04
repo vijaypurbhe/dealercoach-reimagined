@@ -9,6 +9,15 @@ import { CoachInsightsPanel } from "@/components/app/CoachInsights";
 import { CoachChat } from "@/components/app/CoachChat";
 import { InsightChip } from "@/components/app/InsightChip";
 import { PeerRankChip } from "@/components/app/PeerRankChip";
+import { DealerSideNav } from "@/components/app/DealerSideNav";
+import { ActualVsTargetBars } from "@/components/app/ActualVsTargetBars";
+import {
+  getRealCode,
+  getRealPartsSeries,
+  getRealAccySeries,
+  getRealCproSeries,
+  getRealAvgPartsPerCpro,
+} from "@/data/realDealers";
 import { DEALERS, getDealer } from "@/data/dealers";
 import { computeHealth, formatKpi, gapToTarget, latest } from "@/data/health";
 import { getDealerInsight } from "@/data/insights";
@@ -88,9 +97,13 @@ export default function DealerPage() {
       </div>
 
       <main className="mx-auto max-w-7xl px-6 py-6">
+        <div className="flex gap-6">
+          <DealerSideNav dealerId={dealer.id} />
+          <div className="min-w-0 flex-1">
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="mb-6 h-10 w-full justify-start overflow-x-auto bg-transparent p-0">
             <TabsTrigger value="overview" className="data-[state=active]:bg-muted">Overview</TabsTrigger>
+            <TabsTrigger value="performance" className="data-[state=active]:bg-muted">Performance vs Target</TabsTrigger>
             <TabsTrigger value="kpis" className="data-[state=active]:bg-muted">KPI trends</TabsTrigger>
             <TabsTrigger value="coach" className="data-[state=active]:bg-muted">AI Coach</TabsTrigger>
             <TabsTrigger value="actions" className="data-[state=active]:bg-muted">Actions ({dealer.actions.length})</TabsTrigger>
