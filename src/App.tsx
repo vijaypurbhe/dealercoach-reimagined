@@ -32,6 +32,7 @@ export default function App() {
         <Route path="/" element={<PortfolioPage />} />
         <Route path="/dealers/:dealerId" element={<DealerPage />} />
         <Route path="/dealers/:dealerId/kpi-plans" element={<KpiActionPlansPage />} />
+        <Route path="/executive" element={<ExecutivePage />} />
         <Route path="/data" element={<DataPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
