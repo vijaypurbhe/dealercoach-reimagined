@@ -12,6 +12,7 @@ import { InsightChip } from "@/components/app/InsightChip";
 import { PeerRankChip } from "@/components/app/PeerRankChip";
 import { DealerSideNav } from "@/components/app/DealerSideNav";
 import { ActualVsTargetBars } from "@/components/app/ActualVsTargetBars";
+import { ProgramsPanel, CsiAuditPanel, FranchisePanel, AttachmentsPanel, SignOffPanel } from "@/components/app/DealerExtraPanels";
 import {
   getRealCode,
   getRealPartsSeries,
@@ -107,11 +108,17 @@ export default function DealerPage() {
         <Tabs value={tab} onValueChange={setTab} className="w-full">
           <TabsList className="mb-6 h-10 w-full justify-start overflow-x-auto bg-transparent p-0 lg:hidden">
             <TabsTrigger value="overview" className="data-[state=active]:bg-muted">Overview</TabsTrigger>
+            <TabsTrigger value="ai-coach" className="data-[state=active]:bg-muted">AI Coach</TabsTrigger>
             <TabsTrigger value="performance" className="data-[state=active]:bg-muted">Performance vs Target</TabsTrigger>
             <TabsTrigger value="kpi-plans" className="data-[state=active]:bg-muted">KPI Action Plans</TabsTrigger>
             <TabsTrigger value="kpis" className="data-[state=active]:bg-muted">KPI trends</TabsTrigger>
             <TabsTrigger value="actions" className="data-[state=active]:bg-muted">Actions ({dealer.actions.length})</TabsTrigger>
             <TabsTrigger value="context" className="data-[state=active]:bg-muted">Context</TabsTrigger>
+            <TabsTrigger value="programs" className="data-[state=active]:bg-muted">Programs</TabsTrigger>
+            <TabsTrigger value="csi" className="data-[state=active]:bg-muted">CSI Audit</TabsTrigger>
+            <TabsTrigger value="franchise" className="data-[state=active]:bg-muted">Franchise</TabsTrigger>
+            <TabsTrigger value="attachments" className="data-[state=active]:bg-muted">Attachments</TabsTrigger>
+            <TabsTrigger value="signoff" className="data-[state=active]:bg-muted">Sign-Off</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="mt-0 tab-transition">
@@ -177,6 +184,29 @@ export default function DealerPage() {
                 <p className="text-sm">{dealer.context.staffingNotes}</p>
               </ContextCard>
             </div>
+          </TabsContent>
+
+          <TabsContent value="ai-coach" className="mt-0 tab-transition">
+            <div className="grid gap-6 lg:grid-cols-2">
+              <CoachInsightsPanel dealerId={dealer.id} />
+              <CoachChat dealerId={dealer.id} dealerName={dealer.name} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="programs" className="mt-0 tab-transition">
+            <ProgramsPanel dealer={dealer} />
+          </TabsContent>
+          <TabsContent value="csi" className="mt-0 tab-transition">
+            <CsiAuditPanel dealer={dealer} />
+          </TabsContent>
+          <TabsContent value="franchise" className="mt-0 tab-transition">
+            <FranchisePanel dealer={dealer} />
+          </TabsContent>
+          <TabsContent value="attachments" className="mt-0 tab-transition">
+            <AttachmentsPanel dealer={dealer} />
+          </TabsContent>
+          <TabsContent value="signoff" className="mt-0 tab-transition">
+            <SignOffPanel dealer={dealer} />
           </TabsContent>
         </Tabs>
           </div>

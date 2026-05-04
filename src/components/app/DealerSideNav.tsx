@@ -1,4 +1,4 @@
-import { LayoutDashboard, BarChart3, ClipboardList, Tag, Star, Building, Paperclip, FileSignature } from "lucide-react";
+import { LayoutDashboard, BarChart3, ClipboardList, Tag, Star, Building, Paperclip, FileSignature, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface DealerNavProps {
@@ -8,16 +8,17 @@ export interface DealerNavProps {
 
 const items: { value: string; label: string; icon: any; enabled: boolean }[] = [
   { value: "overview", label: "Dashboard", icon: LayoutDashboard, enabled: true },
+  { value: "ai-coach", label: "AI Coach", icon: Sparkles, enabled: true },
   { value: "performance", label: "Parts Performance", icon: BarChart3, enabled: true },
   { value: "kpi-plans", label: "KPI Action Plans", icon: ClipboardList, enabled: true },
   { value: "kpis", label: "KPI Trends", icon: BarChart3, enabled: true },
   { value: "actions", label: "Actions History", icon: ClipboardList, enabled: true },
   { value: "context", label: "Context", icon: Building, enabled: true },
-  { value: "_programs", label: "Programs / Promotions", icon: Tag, enabled: false },
-  { value: "_csi", label: "CSI Audit", icon: Star, enabled: false },
-  { value: "_franchise", label: "Franchise / Facility", icon: Building, enabled: false },
-  { value: "_attach", label: "Attachments", icon: Paperclip, enabled: false },
-  { value: "_signoff", label: "Sign-Off", icon: FileSignature, enabled: false },
+  { value: "programs", label: "Programs / Promotions", icon: Tag, enabled: true },
+  { value: "csi", label: "CSI Audit", icon: Star, enabled: true },
+  { value: "franchise", label: "Franchise / Facility", icon: Building, enabled: true },
+  { value: "attachments", label: "Attachments", icon: Paperclip, enabled: true },
+  { value: "signoff", label: "Sign-Off", icon: FileSignature, enabled: true },
 ];
 
 export function DealerSideNav({ active, onSelect }: DealerNavProps) {
