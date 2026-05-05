@@ -1,10 +1,12 @@
-import { Routes, Route, Link, useLocation, Navigate } from "react-router-dom";
+import { Routes, Route, Link, useLocation, useSearchParams, Navigate } from "react-router-dom";
 import PortfolioPage from "./pages/Portfolio";
 import { usePersona } from "./lib/persona";
 
 function HomeRoute() {
   const { persona } = usePersona();
-  if (persona === "exec") return <Navigate to="/executive" replace />;
+  const [params] = useSearchParams();
+  // Allow exec to drill into a DM's portfolio without switching personas
+  if (persona === "exec" && params.get("as") !== "dm") return <Navigate to="/executive" replace />;
   return <PortfolioPage />;
 }
 import DealerPage from "./pages/Dealer";
