@@ -1,5 +1,12 @@
-import { Routes, Route, Link, useLocation } from "react-router-dom";
+import { Routes, Route, Link, useLocation, Navigate } from "react-router-dom";
 import PortfolioPage from "./pages/Portfolio";
+import { usePersona } from "./lib/persona";
+
+function HomeRoute() {
+  const { persona } = usePersona();
+  if (persona === "exec") return <Navigate to="/executive" replace />;
+  return <PortfolioPage />;
+}
 import DealerPage from "./pages/Dealer";
 import KpiActionPlansPage from "./pages/KpiActionPlans";
 import DataPage from "./pages/Data";
