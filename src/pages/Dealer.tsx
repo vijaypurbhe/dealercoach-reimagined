@@ -104,7 +104,10 @@ export default function DealerPage() {
               <KpiStripItem key={k} kpi={k} value={last[k]} prev={prev[k]} dealer={dealer} peers={peers} />
             ))}
           </div>
-          <div className="pb-3"><InsightChip insight={insight} /></div>
+          <div className="grid gap-2 pb-3 md:grid-cols-2">
+            <InsightChip insight={insight} />
+            <FacilityIntelChip dealer={dealer} />
+          </div>
         </div>
       </div>
 
