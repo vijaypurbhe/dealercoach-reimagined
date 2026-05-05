@@ -36,7 +36,7 @@ export default function App() {
   return (
     <div key={pathname} className="page-transition">
       <Routes>
-        <Route path="/" element={<PortfolioPage />} />
+        <Route path="/" element={<HomeRoute />} />
         <Route path="/dealers/:dealerId" element={<DealerPage />} />
         <Route path="/dealers/:dealerId/kpi-plans" element={<KpiActionPlansPage />} />
         <Route path="/executive" element={<ExecutivePage />} />
