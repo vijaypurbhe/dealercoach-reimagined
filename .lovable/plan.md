@@ -1,61 +1,70 @@
-# C-Level Executive Persona — Dashboard Plan
+# Salesforce Rebuild — Timeline & Cost Estimate
 
-## Research: What auto OEM execs (VP Sales / VP Aftersales / COO / Network GM) want
+Deliverables written to `/mnt/documents/`:
+1. `Salesforce_Rebuild_Proposal.docx` — narrative proposal
+2. `Salesforce_Rebuild_Cost_Model.xlsx` — editable cost model
 
-Based on how dealer-network platforms (CDK Intelligence Suite, Autologica Scope, NEXERA Executive Insight, Loop for Audi) frame exec views, OEM C-suite leaders care less about any one dealer and more about **network health, variance, and risk concentration**. Common themes:
+## Assumptions baked in
 
-1. **Network performance vs. plan** — actual vs. target on the 4–6 KPIs that roll up to corporate scorecards (CSI, retention, parts/accessory revenue, warranty leakage), with YoY and MoM trend.
-2. **Geographic / regional heatmap** — which regions and districts are hot/cold; click through to district → dealer.
-3. **District Manager leaderboard** — ranking DMs by portfolio health, % dealers on-track, coaching cadence (visits completed), action-plan close rate.
-4. **Risk & exception list** — top N at-risk dealers driving the largest gap-to-target dollars; "movers" (biggest improvers/decliners MoM).
-5. **Program / promotion adoption** — % of dealers participating in active OEM programs.
-6. **Forecast vs. budget** — projected parts/accessory revenue vs. annual plan, with shortfall callouts.
-7. **AI executive briefing** — one-paragraph "what changed this week across the network" summary, similar to today's District Briefing.
+- **Platform**: Salesforce Experience Cloud (LWR template) + Sales/Service Cloud objects, Agentforce + Einstein (Copilot, Prediction Builder, Next Best Action), Tableau-embedded analytics for KPI/heatmaps
+- **Backend**: On-prem SQL Server only (no Data Cloud ingestion of raw rows). Integration via **MuleSoft Anypoint** (CDC + REST/OData virtualization for low-latency reads; nightly batch for history)
+- **Identity**: SSO via Azure AD / SAML
+- **Scope = full feature parity** with current app: persona switcher (Exec/DM), Exec dashboard (KPI strip, region heatmap, DM leaderboard, AI insights, risk/movers, program adoption, revenue vs plan), DM Portfolio, Dealer drilldown (KPI trends, action plans, facility intel modal, peer benchmarks, district map, briefing), Coach Chat
+- **Wrap**: SSO, change management, training, UAT, 4-week hypercare
+- **Rate**: blended **$50/hr** across all roles, **40 hr/week**
+- **Team (~9 FTE Standard pod)**: PM, Solution Architect, BA, UX, 3× SF Developers (LWC/Apex), 1× Einstein/Agentforce specialist, 2× MuleSoft/SQL integration devs, 1× QA
 
-## Proposed direction
-
-Add a **persona switcher** (DM ↔ Executive) in the header. Executive lands on a new `/executive` route with this layout:
+## Timeline (~9 months / ~38 weeks elapsed)
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│ Header + Persona switch (DM | Executive)                    │
-├─────────────────────────────────────────────────────────────┤
-│ Network KPI strip:  CSI │ Retention │ Parts $ │ Warranty   │
-│   value · vs target · MoM · YoY · % dealers on-track        │
-├──────────────────────────────────┬──────────────────────────┤
-│ Region heatmap (US map, colored  │ AI Executive Briefing    │
-│ by avg health; click → drill)    │ (network-level summary)  │
-├──────────────────────────────────┴──────────────────────────┤
-│ District Manager leaderboard                                │
-│   DM · # dealers · avg score · % on-track · visits · trend  │
-├─────────────────────────────────────────────────────────────┤
-│ Top risk dealers      │ Top movers (▲/▼ MoM)                │
-├─────────────────────────────────────────────────────────────┤
-│ Program adoption  │  Parts/Accessory revenue vs plan chart  │
-└─────────────────────────────────────────────────────────────┘
+Phase                              Weeks   Calendar
+1. Discovery & Design                6     W01–W06
+2. Foundation (org, SSO, data model) 4     W05–W08  (overlap)
+3. Integration (MuleSoft ↔ SQL)      8     W07–W14
+4. Experience Cloud build            12    W09–W20
+5. Einstein + Agentforce AI          8     W13–W20
+6. Tableau analytics & maps          6     W15–W20
+7. System Integration Test           4     W21–W24
+8. UAT + change mgmt + training      4     W25–W28
+9. Cutover & Hypercare               4     W29–W32
+                                    ───
+                          Elapsed:   ~32 weeks (~7.5 months) with parallelism
 ```
 
-Drilldown: click a region → filtered DM list; click a DM → their portfolio (today's `/` view scoped to their dealers); click a dealer → existing dealer page. Persona is purely a view layer — same underlying data.
+## Effort & cost (high level)
 
-## Technical approach
+Total effort estimate: **~12,800 hours**  →  **~$640,000** at $50/hr blended.
 
-- **Persona state**: lightweight context (`PersonaProvider`) persisted to `localStorage`; switcher in `AppHeader`.
-- **Routes**:
-  - `/executive` — new exec dashboard (default landing when persona = exec)
-  - `/executive/districts/:dmId` — DM-scoped portfolio (reuses Portfolio with a filter)
-  - existing `/` and `/dealers/:id` unchanged for DM persona
-- **Data**:
-  - Add `districtManagers.ts` seed (5–7 DMs, each owns N dealers; assign `dmId` to each dealer in `dealers.ts`).
-  - Add `network.ts` aggregation helpers: `networkKpiRollup()`, `dmLeaderboard()`, `topRisk()`, `topMovers()`, `programAdoption()`.
-- **New components** (under `src/components/exec/`):
-  - `NetworkKpiStrip`, `RegionHeatmap` (reuse `DistrictMap` colored by aggregate health), `DmLeaderboard`, `RiskList`, `MoversList`, `ProgramAdoptionCard`, `RevenueVsPlanChart` (Recharts).
-- **AI briefing**: reuse the existing `coach-insights` edge function pattern with a new `network-briefing` function that summarizes aggregated KPIs (no per-dealer chat).
+| Workstream | Hours | Cost |
+|---|---|---|
+| Discovery, design, PM (PM/SA/BA/UX across project) | 2,400 | $120,000 |
+| Experience Cloud LWC build (3 devs × 12 wks) | 1,440 | $72,000 |
+| Apex / data model / sharing | 1,200 | $60,000 |
+| MuleSoft + SQL Server integration (2 devs × 8 wks + ongoing) | 1,600 | $80,000 |
+| Einstein + Agentforce (Copilot, Prediction Builder, prompt eng.) | 1,280 | $64,000 |
+| Tableau analytics, heatmap, KPI dashboards | 800 | $40,000 |
+| QA (full project) | 1,200 | $60,000 |
+| SSO, security review, perf, accessibility | 480 | $24,000 |
+| SIT + UAT support | 800 | $40,000 |
+| Change mgmt, training, documentation | 600 | $30,000 |
+| Cutover + 4-week hypercare | 800 | $40,000 |
+| **Contingency (~10%)** | — | **~$58,000** |
+| **TOTAL labor** | **~12,800** | **~$640,000** |
 
-## What I need you to confirm
+**Excluded** (pass-through, billed separately): Salesforce licenses (Experience Cloud member, Agentforce conversation credits, Einstein add-ons), MuleSoft subscription, Tableau licenses, Azure AD/SSO, infra for SQL connectivity (private link / VPN).
 
-1. **Persona scope** — just two personas (DM + Executive), or also a middle "Regional Director" tier?
-2. **KPI focus** — keep the existing 6 KPIs at the network level, or do you want exec-only KPIs added (e.g., warranty $ exposure, F&I penetration, fixed absorption %)?
-3. **Drilldown model** — should the exec be able to *act* (assign action plans, sign-off) or strictly read/observe with drill-through to the DM view?
-4. **AI briefing** — network-wide weekly summary only, or also a chat ("which districts are dragging parts revenue this quarter?")?
+## Risks called out in the doc
 
-Once you confirm, I'll implement the persona switcher, data rollups, exec route, and the components above.
+- SQL Server latency to Salesforce (mitigation: MuleSoft caching + OData virtualization)
+- Agentforce grounding on a non-Data-Cloud backend (use Prompt Builder with retrieval against MuleSoft APIs)
+- Map rendering in LWR (Tableau embed vs custom LWC + Mapbox tradeoff)
+- Sandbox/data refresh cadence with on-prem source
+
+## Implementation steps
+
+1. Use the `xlsx` skill to build the cost model with editable assumption cells (rate, hours, contingency %), per-phase rollups, role × phase matrix, and a summary tab.
+2. Use the `docx` skill (docx-js) to generate the proposal: exec summary, scope, architecture, phase-by-phase timeline table, effort table, assumptions, risks, exclusions.
+3. QA: convert XLSX via recalculate_formulas; convert DOCX → PDF → images and inspect first/last pages.
+4. Emit `<lov-artifact>` tags for both files.
+
+After approval I'll switch to build mode and generate both files.
