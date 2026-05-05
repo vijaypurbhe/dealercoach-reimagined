@@ -230,6 +230,43 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{children}</h2>;
 }
 
+function FacilityIntelChip({ dealer }: { dealer: Dealer }) {
+  const notes = dealer.context.facilityNotes.slice(0, 2);
+  const headline = notes[0] ?? "Facility meets brand standards";
+  const drivers = [
+    ...notes.slice(1),
+    dealer.context.staffingNotes,
+    dealer.context.accessibility,
+  ].filter(Boolean).slice(0, 3);
+  return (
+    <div className="group/insight relative flex items-start gap-2 rounded-lg bg-accent/10 px-2.5 py-1.5 ring-1 ring-accent/20 transition-all hover:ring-2">
+      <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-background/60 text-accent-foreground">
+        <Building2 className="h-3 w-3" />
+      </span>
+      <div className="min-w-0">
+        <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Franchise & facility intel
+          <span className="rounded-sm bg-background/60 px-1 py-px text-[9px] font-medium text-muted-foreground">
+            On-site
+          </span>
+        </div>
+        <div className="mt-0.5 text-xs font-medium leading-snug text-foreground line-clamp-2">
+          {headline}
+        </div>
+        {drivers.length > 0 && (
+          <div className="mt-1 flex flex-wrap gap-1">
+            {drivers.map((d) => (
+              <span key={d} className="rounded-sm bg-background/70 px-1.5 py-px text-[10px] text-muted-foreground line-clamp-1 max-w-[260px]">
+                {d}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ContextCard({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="glass-card p-5">
