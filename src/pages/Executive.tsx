@@ -394,15 +394,26 @@ export default function ExecutivePage() {
                 </tr>
               </thead>
               <tbody>
-                {leaderboard.map((row, i) => (
-                  <tr key={row.dm.id} className="border-b border-border/50 last:border-0 hover:bg-muted/30">
+                {leaderboard.map((row, i) => {
+                  const clickable = row.dm.id === "dm-west-1";
+                  return (
+                  <tr
+                    key={row.dm.id}
+                    className={cn(
+                      "border-b border-border/50 last:border-0",
+                      clickable ? "cursor-pointer hover:bg-primary/5" : "hover:bg-muted/30",
+                    )}
+                    onClick={clickable ? () => { window.location.href = `/?as=dm&dm=${row.dm.id}`; } : undefined}
+                    title={clickable ? `Open ${row.dm.name}'s dashboard` : "Drill-in available for Sam Reynolds in this demo"}
+                  >
                     <td className="py-2.5 pr-3">
                       <div className="flex items-center gap-2">
                         <span className="w-4 text-[11px] tabular-nums text-muted-foreground">{i + 1}</span>
                         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-[11px] font-semibold text-secondary-foreground">
                           {row.dm.initials}
                         </div>
-                        <span className="font-medium">{row.dm.name}</span>
+                        <span className={cn("font-medium", clickable && "text-primary underline-offset-2 hover:underline")}>{row.dm.name}</span>
+                        {clickable && <ArrowUpRight className="h-3 w-3 text-primary" />}
                       </div>
                     </td>
                     <td className="py-2.5 pr-3 text-muted-foreground">{row.dm.region}</td>
@@ -425,7 +436,8 @@ export default function ExecutivePage() {
                       <TrendIcon trend={row.trend} />
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
