@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
-import { ArrowUpDown, ArrowUpRight, TrendingDown, TrendingUp, Minus, AlertTriangle, Sparkles, Search, MapPin, Map as MapIcon, List } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
+import { ArrowUpDown, ArrowUpRight, TrendingDown, TrendingUp, Minus, AlertTriangle, Sparkles, Search, MapPin, Map as MapIcon, List, ArrowLeft } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AppHeader } from "@/components/app/AppHeader";
 import { HealthBadge } from "@/components/app/HealthBadge";
@@ -11,6 +11,7 @@ import { computeHealth, formatKpi, latest } from "@/data/health";
 import { getDealerInsight } from "@/data/insights";
 import { KPI_META } from "@/data/types";
 import { Input } from "@/components/ui/input";
+import { usePersona } from "@/lib/persona";
 import { cn } from "@/lib/utils";
 
 type Filter = "all" | "attention" | "watch" | "on_track" | "improving";
@@ -26,6 +27,9 @@ export default function PortfolioPage() {
   const [sortKey, setSortKey] = useState<SortKey>("score");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [view, setView] = useState<"table" | "map">("table");
+  const { persona } = usePersona();
+  const [params] = useSearchParams();
+  const viewingAsDm = persona === "exec" && params.get("as") === "dm";
 
   const enriched = useMemo(
     () => DEALERS.map((d) => ({ dealer: d, health: computeHealth(d), insight: getDealerInsight(d) })),
@@ -94,6 +98,19 @@ export default function PortfolioPage() {
     <div className="min-h-screen bg-background">
       <AppHeader />
       <main className="mx-auto max-w-7xl px-6 py-10">
+        {viewingAsDm && (
+          <div className="mb-4 flex items-center justify-between rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5 text-sm">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span>
+                Viewing <strong>Sam Reynolds</strong>' District Manager dashboard (West-1) as executive.
+              </span>
+            </div>
+            <Link to="/executive" className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10">
+              <ArrowLeft className="h-3 w-3" /> Back to Executive
+            </Link>
+          </div>
+        )}
         <div className="mb-6 flex flex-col gap-2">
           <span className="text-xs font-medium uppercase tracking-wider text-primary">Coaching dashboard</span>
           <h1 className="text-3xl font-semibold tracking-tight">Your dealer portfolio</h1>
