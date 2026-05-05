@@ -26,6 +26,7 @@ import { getDealerInsight } from "@/data/insights";
 import { KPI_META, type KpiKey, type Dealer, type ActionPlan, type DealerHealth } from "@/data/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 const KPI_GRID: KpiKey[] = ["retention1y", "retention7y", "csi", "partsSales", "accessorySales", "warrantyLeakage"];
