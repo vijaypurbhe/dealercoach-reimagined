@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
-import { ArrowUpDown, ArrowUpRight, TrendingDown, TrendingUp, Minus, AlertTriangle, Sparkles, Search, MapPin, Map as MapIcon, List } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
+import { ArrowUpDown, ArrowUpRight, TrendingDown, TrendingUp, Minus, AlertTriangle, Sparkles, Search, MapPin, Map as MapIcon, List, ArrowLeft } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AppHeader } from "@/components/app/AppHeader";
 import { HealthBadge } from "@/components/app/HealthBadge";
@@ -11,6 +11,7 @@ import { computeHealth, formatKpi, latest } from "@/data/health";
 import { getDealerInsight } from "@/data/insights";
 import { KPI_META } from "@/data/types";
 import { Input } from "@/components/ui/input";
+import { usePersona } from "@/lib/persona";
 import { cn } from "@/lib/utils";
 
 type Filter = "all" | "attention" | "watch" | "on_track" | "improving";
