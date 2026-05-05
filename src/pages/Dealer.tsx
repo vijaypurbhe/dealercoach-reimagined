@@ -231,6 +231,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 function FacilityIntelChip({ dealer }: { dealer: Dealer }) {
+  const [open, setOpen] = useState(false);
   const notes = dealer.context.facilityNotes.slice(0, 2);
   const headline = notes[0] ?? "Facility meets brand standards";
   const drivers = [
@@ -239,31 +240,76 @@ function FacilityIntelChip({ dealer }: { dealer: Dealer }) {
     dealer.context.accessibility,
   ].filter(Boolean).slice(0, 3);
   return (
-    <div className="group/insight relative flex items-start gap-2 rounded-lg bg-accent/10 px-2.5 py-1.5 ring-1 ring-accent/20 transition-all hover:ring-2">
-      <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-background/60 text-accent-foreground">
-        <Building2 className="h-3 w-3" />
-      </span>
-      <div className="min-w-0">
-        <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Franchise & facility intel
-          <span className="rounded-sm bg-background/60 px-1 py-px text-[9px] font-medium text-muted-foreground">
-            On-site
-          </span>
-        </div>
-        <div className="mt-0.5 text-xs font-medium leading-snug text-foreground line-clamp-2">
-          {headline}
-        </div>
-        {drivers.length > 0 && (
-          <div className="mt-1 flex flex-wrap gap-1">
-            {drivers.map((d) => (
-              <span key={d} className="rounded-sm bg-background/70 px-1.5 py-px text-[10px] text-muted-foreground line-clamp-1 max-w-[260px]">
-                {d}
-              </span>
-            ))}
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="group/insight relative flex w-full items-start gap-2 rounded-lg bg-accent/10 px-2.5 py-1.5 text-left ring-1 ring-accent/20 transition-all hover:ring-2 focus:outline-none focus:ring-2 focus:ring-accent"
+        aria-label="View full franchise & facility intel"
+      >
+        <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-background/60 text-accent-foreground">
+          <Building2 className="h-3 w-3" />
+        </span>
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Franchise & facility intel
+            <span className="rounded-sm bg-background/60 px-1 py-px text-[9px] font-medium text-muted-foreground">
+              On-site
+            </span>
+            <span className="ml-auto rounded-sm bg-background/60 px-1 py-px text-[9px] font-medium text-muted-foreground opacity-0 transition-opacity group-hover/insight:opacity-100">
+              View details
+            </span>
           </div>
-        )}
-      </div>
-    </div>
+          <div className="mt-0.5 text-xs font-medium leading-snug text-foreground line-clamp-2">
+            {headline}
+          </div>
+          {drivers.length > 0 && (
+            <div className="mt-1 flex flex-wrap gap-1">
+              {drivers.map((d) => (
+                <span key={d} className="rounded-sm bg-background/70 px-1.5 py-px text-[10px] text-muted-foreground line-clamp-1 max-w-[260px]">
+                  {d}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </button>
+      <FacilityIntelDialog dealer={dealer} open={open} onOpenChange={setOpen} />
+    </>
+  );
+}
+
+function FacilityIntelDialog({ dealer, open, onOpenChange }: { dealer: Dealer; open: boolean; onOpenChange: (v: boolean) => void }) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-accent-foreground" />
+            Franchise & facility intel
+          </DialogTitle>
+          <DialogDescription>
+            {dealer.name} — {dealer.city}, {dealer.state}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-5">
+          <section>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Facility notes</h3>
+            <ul className="list-disc space-y-1 pl-5 text-sm text-foreground">
+              {dealer.context.facilityNotes.map((n) => <li key={n}>{n}</li>)}
+            </ul>
+          </section>
+          <section>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Staffing</h3>
+            <p className="text-sm text-foreground">{dealer.context.staffingNotes}</p>
+          </section>
+          <section>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Accessibility</h3>
+            <p className="text-sm text-foreground">{dealer.context.accessibility}</p>
+          </section>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
