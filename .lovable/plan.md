@@ -1,70 +1,49 @@
-# Salesforce Rebuild — Timeline & Cost Estimate
+## Change
 
-Deliverables written to `/mnt/documents/`:
-1. `Salesforce_Rebuild_Proposal.docx` — narrative proposal
-2. `Salesforce_Rebuild_Cost_Model.xlsx` — editable cost model
+Remove MuleSoft from the integration layer. Use native Salesforce connectors to SQL Server instead:
+- **Salesforce Connect with OData 4.0 adapter** for real-time virtualization of SQL Server (External Objects)
+- **Heroku Connect is not applicable** (Postgres only) — call out explicitly
+- **Data Loader / Bulk API + scheduled Apex** for nightly batch history loads
+- **Named Credentials + External Services** for any callable SQL-fronted REST endpoints (lightweight wrapper deployed on customer's existing IIS/.NET if needed for write-back or stored proc invocation)
 
-## Assumptions baked in
+## Impact on team
 
-- **Platform**: Salesforce Experience Cloud (LWR template) + Sales/Service Cloud objects, Agentforce + Einstein (Copilot, Prediction Builder, Next Best Action), Tableau-embedded analytics for KPI/heatmaps
-- **Backend**: On-prem SQL Server only (no Data Cloud ingestion of raw rows). Integration via **MuleSoft Anypoint** (CDC + REST/OData virtualization for low-latency reads; nightly batch for history)
-- **Identity**: SSO via Azure AD / SAML
-- **Scope = full feature parity** with current app: persona switcher (Exec/DM), Exec dashboard (KPI strip, region heatmap, DM leaderboard, AI insights, risk/movers, program adoption, revenue vs plan), DM Portfolio, Dealer drilldown (KPI trends, action plans, facility intel modal, peer benchmarks, district map, briefing), Coach Chat
-- **Wrap**: SSO, change management, training, UAT, 4-week hypercare
-- **Rate**: blended **$50/hr** across all roles, **40 hr/week**
-- **Team (~9 FTE Standard pod)**: PM, Solution Architect, BA, UX, 3× SF Developers (LWC/Apex), 1× Einstein/Agentforce specialist, 2× MuleSoft/SQL integration devs, 1× QA
+- Drop the 2× MuleSoft/SQL integration developers
+- Add 1× Salesforce Integration Developer (Salesforce Connect / OData / Apex async)
+- Keep 1× SQL Server developer (on customer side or our pod) to expose OData endpoints from SQL Server (via SQL Server's built-in OData support / a thin .NET OData service) and tune queries/indexes
+- New pod size: **~8 FTE** (was 9)
 
-## Timeline (~9 months / ~38 weeks elapsed)
+## Impact on timeline
 
-```text
-Phase                              Weeks   Calendar
-1. Discovery & Design                6     W01–W06
-2. Foundation (org, SSO, data model) 4     W05–W08  (overlap)
-3. Integration (MuleSoft ↔ SQL)      8     W07–W14
-4. Experience Cloud build            12    W09–W20
-5. Einstein + Agentforce AI          8     W13–W20
-6. Tableau analytics & maps          6     W15–W20
-7. System Integration Test           4     W21–W24
-8. UAT + change mgmt + training      4     W25–W28
-9. Cutover & Hypercare               4     W29–W32
-                                    ───
-                          Elapsed:   ~32 weeks (~7.5 months) with parallelism
-```
+- Integration phase shortens from **8w → 6w** (no MuleSoft platform standup, flows, or CloudHub config; OData adapter setup is faster but constrained)
+- Overall elapsed timeline: **32w → 30w**
 
-## Effort & cost (high level)
+## Impact on cost
 
-Total effort estimate: **~12,800 hours**  →  **~$640,000** at $50/hr blended.
-
-| Workstream | Hours | Cost |
+| Line | Before | After |
 |---|---|---|
-| Discovery, design, PM (PM/SA/BA/UX across project) | 2,400 | $120,000 |
-| Experience Cloud LWC build (3 devs × 12 wks) | 1,440 | $72,000 |
-| Apex / data model / sharing | 1,200 | $60,000 |
-| MuleSoft + SQL Server integration (2 devs × 8 wks + ongoing) | 1,600 | $80,000 |
-| Einstein + Agentforce (Copilot, Prediction Builder, prompt eng.) | 1,280 | $64,000 |
-| Tableau analytics, heatmap, KPI dashboards | 800 | $40,000 |
-| QA (full project) | 1,200 | $60,000 |
-| SSO, security review, perf, accessibility | 480 | $24,000 |
-| SIT + UAT support | 800 | $40,000 |
-| Change mgmt, training, documentation | 600 | $30,000 |
-| Cutover + 4-week hypercare | 800 | $40,000 |
-| **Contingency (~10%)** | — | **~$58,000** |
-| **TOTAL labor** | **~12,800** | **~$640,000** |
+| Integration labor | $80,000 (2 devs × 8w) | $48,000 (1 SF int dev + 1 SQL dev × 6w) |
+| Total labor | $640,000 | **~$590,000** |
+| Contingency (10%) | $64,000 | ~$59,000 |
+| **Total** | **$704,000** | **~$649,000** |
 
-**Excluded** (pass-through, billed separately): Salesforce licenses (Experience Cloud member, Agentforce conversation credits, Einstein add-ons), MuleSoft subscription, Tableau licenses, Azure AD/SSO, infra for SQL connectivity (private link / VPN).
+Savings: **~$55,000** and **2 weeks**.
 
-## Risks called out in the doc
+## Risks to flag (new/changed)
 
-- SQL Server latency to Salesforce (mitigation: MuleSoft caching + OData virtualization)
-- Agentforce grounding on a non-Data-Cloud backend (use Prompt Builder with retrieval against MuleSoft APIs)
-- Map rendering in LWR (Tableau embed vs custom LWC + Mapbox tradeoff)
-- Sandbox/data refresh cadence with on-prem source
+- **Salesforce Connect query limits**: External Objects have row/query limits (default 100k rows per query, sync limits per hour). Heavy KPI aggregations should be **pre-aggregated in SQL Server views** and exposed as OData entities — not raw fact tables.
+- **No Data Cloud / no MuleSoft caching layer**: latency depends entirely on SQL Server response time + network. Mitigation: OData server-side paging, indexed views, Platform Cache for hot lookups.
+- **Write-back is harder**: Salesforce Connect supports writeable External Objects only with OData 4.0 + proper SQL endpoint. Action plan saves, coach chat history, etc. likely live in **native Salesforce objects** synced nightly back to SQL.
+- **Agentforce grounding**: still constrained — now grounded via Apex callouts to OData endpoints (no MuleSoft API layer to standardize).
 
-## Implementation steps
+## Deliverables to regenerate
 
-1. Use the `xlsx` skill to build the cost model with editable assumption cells (rate, hours, contingency %), per-phase rollups, role × phase matrix, and a summary tab.
-2. Use the `docx` skill (docx-js) to generate the proposal: exec summary, scope, architecture, phase-by-phase timeline table, effort table, assumptions, risks, exclusions.
-3. QA: convert XLSX via recalculate_formulas; convert DOCX → PDF → images and inspect first/last pages.
-4. Emit `<lov-artifact>` tags for both files.
+1. `Salesforce_Rebuild_Proposal_v2.docx` — updated architecture section, integration approach, team table, timeline, risks, cost
+2. `Salesforce_Rebuild_Cost_Model_v2.xlsx` — updated Assumptions (8 FTE), Role × Phase matrix (swap MuleSoft devs for SF Int Dev + SQL Dev, integration phase 6w), Gantt, totals
 
-After approval I'll switch to build mode and generate both files.
+Originals (`_v1` equivalents) remain available; new files are versioned `_v2`.
+
+## QA
+
+- Recalculate XLSX formulas, verify zero formula errors, totals tie to ~$590K labor / ~$649K with contingency
+- Render DOCX → PDF → images, inspect every page for layout/clipping
