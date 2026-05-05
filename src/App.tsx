@@ -1,5 +1,12 @@
-import { Routes, Route, Link, useLocation } from "react-router-dom";
+import { Routes, Route, Link, useLocation, Navigate } from "react-router-dom";
 import PortfolioPage from "./pages/Portfolio";
+import { usePersona } from "./lib/persona";
+
+function HomeRoute() {
+  const { persona } = usePersona();
+  if (persona === "exec") return <Navigate to="/executive" replace />;
+  return <PortfolioPage />;
+}
 import DealerPage from "./pages/Dealer";
 import KpiActionPlansPage from "./pages/KpiActionPlans";
 import DataPage from "./pages/Data";
@@ -29,7 +36,7 @@ export default function App() {
   return (
     <div key={pathname} className="page-transition">
       <Routes>
-        <Route path="/" element={<PortfolioPage />} />
+        <Route path="/" element={<HomeRoute />} />
         <Route path="/dealers/:dealerId" element={<DealerPage />} />
         <Route path="/dealers/:dealerId/kpi-plans" element={<KpiActionPlansPage />} />
         <Route path="/executive" element={<ExecutivePage />} />
