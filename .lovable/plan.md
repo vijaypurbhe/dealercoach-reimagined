@@ -1,49 +1,107 @@
-## Change
 
-Remove MuleSoft from the integration layer. Use native Salesforce connectors to SQL Server instead:
-- **Salesforce Connect with OData 4.0 adapter** for real-time virtualization of SQL Server (External Objects)
-- **Heroku Connect is not applicable** (Postgres only) — call out explicitly
-- **Data Loader / Bulk API + scheduled Apex** for nightly batch history loads
-- **Named Credentials + External Services** for any callable SQL-fronted REST endpoints (lightweight wrapper deployed on customer's existing IIS/.NET if needed for write-back or stored proc invocation)
+# v4 Plan — License-Aligned Lean Pod Rebuild
 
-## Impact on team
+## Decisions locked from license review
 
-- Drop the 2× MuleSoft/SQL integration developers
-- Add 1× Salesforce Integration Developer (Salesforce Connect / OData / Apex async)
-- Keep 1× SQL Server developer (on customer side or our pod) to expose OData endpoints from SQL Server (via SQL Server's built-in OData support / a thin .NET OData service) and tune queries/indexes
-- New pod size: **~8 FTE** (was 9)
+1. **Base user licenses (Sales/Service Cloud Enterprise+) confirmed available** — no incremental seat cost in proposal. Note as customer-side prerequisite.
+2. **Hybrid integration**: Data Cloud Zero-Copy Federation for SQL Server reads (KPIs, history, dealer attributes); Named Credentials + External Services + lightweight Apex for transactional writebacks (action plan saves, coach chat persistence, status updates).
+3. **AI grounding**: Agentforce (Default) + Einstein Prompt Templates — both currently active with ample headroom (40 agent seats, 31 prompt templates remaining). No new SKU required.
 
-## Impact on timeline
+## License coverage summary (to include in proposal)
 
-- Integration phase shortens from **8w → 6w** (no MuleSoft platform standup, flows, or CloudHub config; OData adapter setup is faster but constrained)
-- Overall elapsed timeline: **32w → 30w**
+**Fully covered by existing entitlement, $0 incremental:**
+- Agentforce Default (40), Agentforce Platform User (75K)
+- Einstein Prompt Templates (41), Einstein GPT Work Summaries / Search Answers
+- Einstein Agent / Agent CWU (80 each)
+- Data Cloud (200K credits) + **Remote Data Cloud (200K)** ← powers Zero-Copy
+- Business Rules Engine Designer + Runtime, Decision Explainer, Einstein Next Best Action
+- Tableau Einstein Included App (40), Analytics View Only Embedded (120), Service Analytics Apps (80)
+- Sales Workspace User (41), Service User (40), Knowledge Creation User (40)
+- Code Builder, Scale Center, Salesforce API Integration (build phase)
 
-## Impact on cost
+**Customer-side prerequisites (call out, exclude from cost):**
+- ~50-60 base Sales/Service Cloud Enterprise+ user seats for DM cohort + execs/admins (confirmed available)
+- Salesforce Connect / OData adapter SKU **only required for the writeback path** — verify with account team before build kickoff
 
-| Line | Before | After |
+**Out of scope / not needed:**
+- MuleSoft (already removed)
+- Experience Cloud, Commerce, Messaging, FSC Insurance, Visual Remote Assistant
+- Agentforce Sales Coach SKU (using Default + Prompt Templates instead)
+
+## Architecture changes vs v3
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│  Salesforce (DM Console — Sales/Service Cloud)              │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐   │
+│  │ KPI cards    │  │ Action plans │  │ Agentforce Coach │   │
+│  │ + dashboards │  │ (BRE rules)  │  │ (Prompt Tmpl)    │   │
+│  └──────┬───────┘  └──────┬───────┘  └────────┬─────────┘   │
+│         │ reads           │ writes            │ grounding   │
+└─────────┼─────────────────┼───────────────────┼─────────────┘
+          ▼                 ▼                   ▼
+   ┌─────────────┐   ┌──────────────┐   ┌──────────────┐
+   │ Data Cloud  │   │ Named Creds  │   │ Data Cloud   │
+   │ Zero-Copy   │   │ + External   │   │ DLOs (same   │
+   │ → SQL DLOs  │   │ Services     │   │ federation)  │
+   └──────┬──────┘   │ → SQL OData  │   └──────────────┘
+          │          └──────┬───────┘
+          ▼                 ▼
+   ┌─────────────────────────────────┐
+   │  Customer SQL Server            │
+   │  (read views + write endpoints) │
+   └─────────────────────────────────┘
+```
+
+## Team impact (vs v3)
+
+Pod stays at **5 FTE** but role mix shifts slightly:
+- SF Integration Developer's scope rebalances: **less OData scaffolding** (Zero-Copy auto-federates reads), **more Data Cloud DLO modeling + Apex writeback wrappers**
+- SQL Server Developer's scope reduces from "build full OData service layer" to **"expose curated views for federation + 4-6 OData write endpoints"**
+- Net effect: **~1 week shorter integration phase** (6w → 5w), **~$10K labor savings**
+
+## Timeline impact
+
+- v3: 38 elapsed weeks → **v4: ~37 elapsed weeks**
+- AI build phase compresses slightly because grounding via Data Cloud DLOs is faster than Apex-callout grounding (no per-query OData wrapper)
+
+## Cost impact (vs v3)
+
+| Line | v3 | v4 |
 |---|---|---|
-| Integration labor | $80,000 (2 devs × 8w) | $48,000 (1 SF int dev + 1 SQL dev × 6w) |
-| Total labor | $640,000 | **~$590,000** |
-| Contingency (10%) | $64,000 | ~$59,000 |
-| **Total** | **$704,000** | **~$649,000** |
+| Total effort | 6,504 hrs | ~6,304 hrs |
+| Labor ($50 blended) | $325,200 | **~$315,200** |
+| Contingency (10%) | $32,520 | ~$31,520 |
+| **Total** | **$357,720** | **~$346,720** |
+| **Salesforce license cost added** | $0 | **$0 (existing entitlement)** |
 
-Savings: **~$55,000** and **2 weeks**.
+Savings vs v3: ~$11K. Savings vs v1: ~50%.
 
-## Risks to flag (new/changed)
+## New risks to flag
 
-- **Salesforce Connect query limits**: External Objects have row/query limits (default 100k rows per query, sync limits per hour). Heavy KPI aggregations should be **pre-aggregated in SQL Server views** and exposed as OData entities — not raw fact tables.
-- **No Data Cloud / no MuleSoft caching layer**: latency depends entirely on SQL Server response time + network. Mitigation: OData server-side paging, indexed views, Platform Cache for hot lookups.
-- **Write-back is harder**: Salesforce Connect supports writeable External Objects only with OData 4.0 + proper SQL endpoint. Action plan saves, coach chat history, etc. likely live in **native Salesforce objects** synced nightly back to SQL.
-- **Agentforce grounding**: still constrained — now grounded via Apex callouts to OData endpoints (no MuleSoft API layer to standardize).
+- **Zero-Copy Federation maturity**: query pushdown to SQL Server has limits on complex joins/aggregations — mitigate with pre-aggregated SQL views (same mitigation as v3)
+- **Two integration patterns to maintain** (Zero-Copy reads + OData writes) — slightly higher ops complexity than single-pattern v3
+- **Salesforce Connect adapter SKU still required for write path** — flag as customer prerequisite; if not available, fall back to Apex HTTP callouts via Named Credentials (no additional SKU)
+- **Agentforce Default vs Sales Coach SKU**: using Default means we build coaching UX rather than getting it OOTB — already factored into v3 hours, no change
 
 ## Deliverables to regenerate
 
-1. `Salesforce_Rebuild_Proposal_v2.docx` — updated architecture section, integration approach, team table, timeline, risks, cost
-2. `Salesforce_Rebuild_Cost_Model_v2.xlsx` — updated Assumptions (8 FTE), Role × Phase matrix (swap MuleSoft devs for SF Int Dev + SQL Dev, integration phase 6w), Gantt, totals
+1. **`Salesforce_Rebuild_Proposal_v4.docx`** — new sections:
+   - Executive license-coverage table (what's covered $0 vs prerequisites)
+   - Updated architecture diagram (hybrid Data Cloud + OData)
+   - Revised team table (rebalanced integration roles)
+   - Updated 37-week timeline
+   - Risk register additions
 
-Originals (`_v1` equivalents) remain available; new files are versioned `_v2`.
+2. **`Salesforce_Rebuild_Cost_Model_v4.xlsx`** — updates:
+   - **New tab: `License_Coverage`** — full PSL inventory mapped to project capabilities, with $0 incremental call-out
+   - Assumptions tab: note hybrid integration pattern
+   - Role × Phase matrix: integration phase 6w → 5w, AI build -1w
+   - Totals: $315.2K labor, $346.7K with contingency
+   - Comparison block: v1 / v2 / v3 / v4
 
 ## QA
 
-- Recalculate XLSX formulas, verify zero formula errors, totals tie to ~$590K labor / ~$649K with contingency
-- Render DOCX → PDF → images, inspect every page for layout/clipping
+- Recalculate XLSX, verify zero formula errors
+- Render DOCX → PDF → page images, inspect every page for layout/clipping
+- Cross-check license table against source document (Mitsubishi NA PSL export)
